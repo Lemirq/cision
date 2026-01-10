@@ -51,6 +51,8 @@ export function CityMap({ hotspots }: CityMapProps) {
       properties: {
         id: hotspot.id,
         severity: hotspot.severity_score,
+        intersection: hotspot.intersection,
+        address: hotspot.address,
       },
     })),
   };
@@ -140,6 +142,7 @@ export function CityMap({ hotspots }: CityMapProps) {
           }}
         />
       </Source>
+
     </Map>
   );
 }

@@ -25,11 +25,13 @@ export async function GET(request: NextRequest) {
 
   // Use maximum allowed size (640x640) or custom size from parameter
   // Google Street View Static API maximum is 640x640 pixels
+  // scale=2 doubles the resolution (640x640 becomes 1280x1280)
   const size = sizeParam;
   const fov = "90";
   const pitch = "0";
+  const scale = "2";
 
-  const streetViewUrl = `https://maps.googleapis.com/maps/api/streetview?size=${size}&location=${lat},${lng}&heading=${heading}&fov=${fov}&pitch=${pitch}&key=${apiKey}`;
+  const streetViewUrl = `https://maps.googleapis.com/maps/api/streetview?size=${size}&location=${lat},${lng}&heading=${heading}&fov=${fov}&pitch=${pitch}&scale=${scale}&key=${apiKey}`;
 
   try {
     const response = await fetch(streetViewUrl);
