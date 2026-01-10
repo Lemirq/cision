@@ -1,5 +1,7 @@
 "use client";
 
+import { motion } from "framer-motion";
+
 interface SeverityProgressBarProps {
   score: number;
 }
@@ -32,7 +34,14 @@ export function SeverityProgressBar({ score }: SeverityProgressBarProps) {
         <span className="text-xs text-zinc-400 uppercase tracking-wider font-mono">
           Severity Score
         </span>
-        <span className="text-4xl font-bold text-white font-mono">{score}</span>
+        <motion.span
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4, delay: 0.5, ease: "easeOut" }}
+          className="text-4xl font-bold text-white font-mono"
+        >
+          {score}
+        </motion.span>
       </div>
 
       <div className="space-y-1">
@@ -40,11 +49,23 @@ export function SeverityProgressBar({ score }: SeverityProgressBarProps) {
           {Array.from({ length: totalSegments }).map((_, index) => {
             const isFilled = index < filledSegments;
             return (
-              <div
+              <motion.div
                 key={index}
+                initial={{ scaleX: 0, opacity: 0 }}
+                animate={{ 
+                  scaleX: 1, 
+                  opacity: 1,
+                  backgroundColor: isFilled ? "rgb(255, 255, 255)" : "rgb(39, 39, 42)"
+                }}
+                transition={{
+                  duration: 0.3,
+                  delay: index * 0.03,
+                  ease: "easeOut"
+                }}
                 className={`flex-1 h-6 rounded-sm ${
                   isFilled ? "bg-white" : "bg-zinc-800"
                 }`}
+                style={{ transformOrigin: "left" }}
               />
             );
           })}
