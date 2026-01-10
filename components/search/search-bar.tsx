@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
-import { Search, X, MapPin, Navigation } from "lucide-react";
+import { Search, X, MapPin } from "lucide-react";
 import { useMapStore } from "@/stores/map-store";
 import type { ClusteredHotspot } from "@/types/collision";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,11 +11,10 @@ interface SearchBarProps {
 }
 
 interface SearchResult {
-  type: "intersection" | "road";
+  type: "intersection";
   id: string;
   label: string;
-  intersection?: ClusteredHotspot;
-  roadName?: string;
+  intersection: ClusteredHotspot;
 }
 
 export function SearchBar({ hotspots }: SearchBarProps) {
@@ -24,22 +23,7 @@ export function SearchBar({ hotspots }: SearchBarProps) {
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { selectHotspot, highlightRoad, flyTo } = useMapStore();
-
-  // Extract unique road names from intersections
-  const roadNames = useMemo(() => {
-    const roads = new Set<string>();
-    hotspots.forEach((hotspot) => {
-      const parts = hotspot.intersection.split(" & ");
-      parts.forEach((part) => {
-        const roadName = part.trim();
-        if (roadName) {
-          roads.add(roadName);
-        }
-      });
-    });
-    return Array.from(roads).sort();
-  }, [hotspots]);
+  const { selectHotspot, flyTo } = useMapStore();
 
   // Search results
   const results = useMemo<SearchResult[]>(() => {
@@ -66,56 +50,25 @@ export function SearchBar({ hotspots }: SearchBarProps) {
       }
     });
 
-    // Search roads
-    roadNames.forEach((roadName) => {
-      if (roadName.toLowerCase().includes(lowerQuery)) {
-        searchResults.push({
-          type: "road",
-          id: `road-${roadName}`,
-          label: roadName,
-          roadName,
-        });
-      }
-    });
-
-    // Sort: exact matches first, then by type (intersections before roads)
+    // Sort: exact matches first
     return searchResults.sort((a, b) => {
       const aExact = a.label.toLowerCase() === lowerQuery;
       const bExact = b.label.toLowerCase() === lowerQuery;
       if (aExact && !bExact) return -1;
       if (!aExact && bExact) return 1;
-      if (a.type !== b.type) {
-        return a.type === "intersection" ? -1 : 1;
-      }
       return a.label.localeCompare(b.label);
     });
-  }, [query, hotspots, roadNames]);
+  }, [query, hotspots]);
 
   // Handle selection
   const handleSelect = (result: SearchResult) => {
-    if (result.type === "intersection" && result.intersection) {
-      highlightRoad(null); // Clear road highlight when selecting intersection
-      selectHotspot(result.intersection);
-      flyTo(
-        result.intersection.centroid.lng,
-        result.intersection.centroid.lat
-      );
-      setQuery("");
-      setIsOpen(false);
-    } else if (result.type === "road" && result.roadName) {
-      selectHotspot(null); // Clear intersection selection when selecting road
-      highlightRoad(result.roadName);
-      // Find all intersections on this road and fly to the first one
-      const roadIntersections = hotspots.filter((hotspot) =>
-        hotspot.intersection.toLowerCase().includes(result.roadName!.toLowerCase())
-      );
-      if (roadIntersections.length > 0) {
-        const firstIntersection = roadIntersections[0];
-        flyTo(firstIntersection.centroid.lng, firstIntersection.centroid.lat);
-      }
-      setQuery("");
-      setIsOpen(false);
-    }
+    selectHotspot(result.intersection);
+    flyTo(
+      result.intersection.centroid.lng,
+      result.intersection.centroid.lat
+    );
+    setQuery("");
+    setIsOpen(false);
   };
 
   // Handle keyboard navigation
@@ -134,7 +87,6 @@ export function SearchBar({ hotspots }: SearchBarProps) {
     } else if (e.key === "Escape") {
       setIsOpen(false);
       setQuery("");
-      highlightRoad(null);
     }
   };
 
@@ -161,7 +113,7 @@ export function SearchBar({ hotspots }: SearchBarProps) {
   return (
     <div ref={searchRef} className="relative w-full max-w-md">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-300 pointer-events-none" />
         <input
           ref={inputRef}
           type="text"
@@ -172,7 +124,7 @@ export function SearchBar({ hotspots }: SearchBarProps) {
           }}
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
-          placeholder="Search intersections or roads..."
+          placeholder="Search intersections..."
           className="w-full pl-10 pr-10 py-2.5 bg-zinc-900/80 backdrop-blur-sm border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-700 focus:border-transparent transition-all"
         />
         {query && (
@@ -180,7 +132,6 @@ export function SearchBar({ hotspots }: SearchBarProps) {
             onClick={() => {
               setQuery("");
               setIsOpen(false);
-              highlightRoad(null);
               inputRef.current?.focus();
             }}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition-colors"
@@ -210,19 +161,13 @@ export function SearchBar({ hotspots }: SearchBarProps) {
                     : "bg-transparent hover:bg-zinc-800/50"
                 }`}
               >
-                {result.type === "intersection" ? (
-                  <MapPin className="h-4 w-4 text-blue-400 flex-shrink-0" />
-                ) : (
-                  <Navigation className="h-4 w-4 text-green-400 flex-shrink-0" />
-                )}
+                <MapPin className="h-4 w-4 text-blue-400 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="text-white text-sm font-medium truncate">
                     {result.label}
                   </div>
                   <div className="text-zinc-400 text-xs mt-0.5">
-                    {result.type === "intersection"
-                      ? "Intersection"
-                      : "Road"}
+                    Intersection
                   </div>
                 </div>
               </button>

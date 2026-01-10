@@ -2,6 +2,7 @@
 
 import { StreetViewPanel } from "./street-view-panel";
 import { StatsGrid } from "./stats-grid";
+import { SeverityProgressBar } from "./severity-progress-bar";
 import type { ClusteredHotspot } from "@/types/collision";
 import { MapPin, ChevronRight } from "lucide-react";
 
@@ -27,23 +28,7 @@ export function OverviewTab({ hotspot }: OverviewTabProps) {
 
       <StatsGrid hotspot={hotspot} />
 
-      <div className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900/50 p-3">
-        <div>
-          <p className="text-sm text-zinc-400">Severity Score</p>
-          <p className="text-lg font-bold text-white">{hotspot.severity_score}/100</p>
-        </div>
-        <div
-          className={`px-3 py-1 rounded-full text-sm font-medium ${
-            hotspot.severity_score >= 80
-              ? "bg-red-500/20 text-red-400"
-              : hotspot.severity_score >= 60
-              ? "bg-amber-500/20 text-amber-400"
-              : "bg-green-500/20 text-green-400"
-          }`}
-        >
-          {hotspot.severity_score >= 80 ? "Critical" : hotspot.severity_score >= 60 ? "High" : "Moderate"}
-        </div>
-      </div>
+      <SeverityProgressBar score={hotspot.severity_score} />
 
       <div className="pt-2">
         <button className="w-full flex items-center justify-between p-3 rounded-lg bg-blue-600 hover:bg-blue-700 transition-colors">

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMapStore } from "@/stores/map-store";
-import { X, Map as MapIcon } from "lucide-react";
+import { X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OverviewTab } from "./overview-tab";
 import { PhotoProvider } from "react-photo-view";
@@ -20,23 +20,28 @@ export function IntersectionSidebar() {
   }, [selectedHotspot?.id]);
 
   return (
-    <motion.aside
-      initial={{ x: "100%", opacity: 0 }}
-      animate={{ 
-        x: 0, 
-        opacity: 1
-      }}
-      transition={{
-        type: "spring",
-        damping: 25,
-        stiffness: 200
-      }}
-      className="fixed right-0 top-0 z-50 h-screen w-[400px] border-l border-zinc-800 bg-zinc-950 flex flex-col overflow-hidden"
-    >
-      <AnimatePresence mode="wait">
-        {selectedHotspot ? (
+    <AnimatePresence mode="wait">
+      {selectedHotspot && (
+        <motion.aside
+          key={selectedHotspot.id}
+          initial={{ x: "100%", opacity: 0 }}
+          animate={{
+            x: 0,
+            opacity: 1
+          }}
+          exit={{
+            x: "100%",
+            opacity: 0
+          }}
+          transition={{
+            type: "spring",
+            damping: 25,
+            stiffness: 200
+          }}
+          className="fixed right-0 top-0 z-50 h-screen w-[400px] border-l border-zinc-800 bg-zinc-950 flex flex-col"
+        >
           <motion.div
-            key="hotspot-content"
+            key={selectedHotspot.id}
             initial={{ x: 20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -20, opacity: 0 }}
@@ -64,23 +69,23 @@ export function IntersectionSidebar() {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto overflow-x-hidden p-4">
+            <div className="flex-1 overflow-y-auto p-4">
               <PhotoProvider>
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <TabsList className="grid w-full grid-cols-3 bg-zinc-900">
-                    <TabsTrigger 
+                    <TabsTrigger
                       value="overview"
                       className="transition-all hover:scale-105 active:scale-95"
                     >
                       Overview
                     </TabsTrigger>
-                    <TabsTrigger 
+                    <TabsTrigger
                       value="audit"
                       className="transition-all hover:scale-105 active:scale-95"
                     >
                       Safety Audit
                     </TabsTrigger>
-                    <TabsTrigger 
+                    <TabsTrigger
                       value="reimagine"
                       className="transition-all hover:scale-105 active:scale-95"
                     >
@@ -149,29 +154,8 @@ export function IntersectionSidebar() {
               </PhotoProvider>
             </div>
           </motion.div>
-        ) : (
-          <motion.div
-            key="placeholder-content"
-            initial={{ x: 20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -20, opacity: 0 }}
-            transition={{
-              type: "spring",
-              damping: 25,
-              stiffness: 200
-            }}
-            className="flex flex-col items-center justify-center h-full text-center p-4"
-          >
-            <div className="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center mb-4">
-              <MapIcon className="h-8 w-8 text-zinc-500" />
-            </div>
-            <h3 className="text-lg font-medium text-white mb-2">Explore the Map</h3>
-            <p className="text-sm text-zinc-400 max-w-xs">
-              Click on any hotspot marker to view collision data and generate safety insights.
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.aside>
+        </motion.aside>
+      )}
+    </AnimatePresence>
   );
 }
