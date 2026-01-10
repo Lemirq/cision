@@ -5,6 +5,7 @@ export async function GET(request: NextRequest) {
   const lat = searchParams.get("lat");
   const lng = searchParams.get("lng");
   const heading = searchParams.get("heading") || "0";
+  const sizeParam = searchParams.get("size") || "640x640";
 
   if (!lat || !lng) {
     return NextResponse.json(
@@ -22,7 +23,9 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const size = "640x480";
+  // Use maximum allowed size (640x640) or custom size from parameter
+  // Google Street View Static API maximum is 640x640 pixels
+  const size = sizeParam;
   const fov = "90";
   const pitch = "0";
 
