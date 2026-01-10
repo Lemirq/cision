@@ -13,16 +13,23 @@ export function StreetViewPanel({ lat, lng }: StreetViewPanelProps) {
   const [heading, setHeading] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   const imageUrl = `/api/streetview?lat=${lat}&lng=${lng}&heading=${heading}`;
 
   const rotateView = () => {
     setIsLoading(true);
+    setHasError(false);
     setHeading((prev) => (prev + 90) % 360);
   };
 
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);
+  };
+
+  const handleImageError = () => {
+    setIsLoading(false);
+    setHasError(true);
   };
 
   return (
@@ -41,18 +48,30 @@ export function StreetViewPanel({ lat, lng }: StreetViewPanelProps) {
         </button>
       )}
 
-      {isLoading && (
+      {isLoading && !hasError && (
         <div className="absolute inset-0 bg-zinc-800 animate-pulse z-10" />
       )}
 
-      <img
-        src={imageUrl}
-        alt="Street View"
-        className={`w-full object-cover transition-all duration-300 ${
+      {hasError ? (
+        <div className={`flex items-center justify-center bg-zinc-800 text-zinc-400 ${
           isExpanded ? "h-full" : "h-48"
-        }`}
-        onLoad={() => setIsLoading(false)}
-      />
+        }`}>
+          <div className="text-center p-4">
+            <p className="text-sm">Street View not available</p>
+            <p className="text-xs text-zinc-500 mt-1">for this location</p>
+          </div>
+        </div>
+      ) : (
+        <img
+          src={imageUrl}
+          alt="Street View"
+          className={`w-full object-cover transition-all duration-300 ${
+            isExpanded ? "h-full" : "h-48"
+          }`}
+          onLoad={() => setIsLoading(false)}
+          onError={handleImageError}
+        />
+      )}
 
       <div className={`absolute bottom-3 right-3 flex gap-2 ${isExpanded ? "bottom-6 right-6" : ""}`}>
         <Button
