@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Volume2, Mic, Send, User, Building2, HardHat } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -47,18 +47,37 @@ interface Message {
   content: string;
 }
 
+const welcomeMessages: Record<string, string> = {
+  cyclist: "Hi, I'm Marcus Chen. I was hit by a car at this intersection last year. What would you like to know about safety here?",
+  mp: "Hello, I'm Sarah Williams. As a Member of Parliament, I'm focused on improving infrastructure funding for safer intersections. How can I help?",
+  engineer: "Hi there, I'm James Okonkwo, a civil engineer specializing in traffic safety. What questions do you have about this intersection's design?",
+};
+
 export function PersonaSidebar() {
   const [selectedPersona, setSelectedPersona] = useState<Persona>(PERSONAS[0]);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
       role: "persona",
-      content: `Hi, I'm ${PERSONAS[0].name}. I was hit by a car at this intersection last year. What would you like to know about safety here?`,
+      content: welcomeMessages[PERSONAS[0].id],
     },
   ]);
   const [input, setInput] = useState("");
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isListening, setIsListening] = useState(false);
+
+  // Animate chat when switching personas
+  const handlePersonaChange = (persona: Persona) => {
+    setSelectedPersona(persona);
+    // Clear messages and show new welcome message with animation
+    setMessages([
+      {
+        id: Date.now().toString(),
+        role: "persona",
+        content: welcomeMessages[persona.id],
+      },
+    ]);
+  };
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -109,7 +128,7 @@ export function PersonaSidebar() {
     <motion.aside
       initial={{ x: 0 }}
       animate={{ x: 0 }}
-      className="fixed left-16 top-0 z-40 h-screen w-80 border-r border-zinc-800 bg-zinc-950 flex flex-col"
+      className="fixed left-16 top-0 z-40 h-screen w-80 border-r border-zinc-800 bg-zinc-950 flex flex-col overflow-hidden"
     >
       <div className="border-b border-zinc-800 p-4">
         <h2 className="text-lg font-semibold text-white mb-1">Voice Chat</h2>
@@ -120,9 +139,11 @@ export function PersonaSidebar() {
         <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Select Persona</p>
         <div className="space-y-2">
           {PERSONAS.map((persona) => (
-            <button
+            <motion.button
               key={persona.id}
-              onClick={() => setSelectedPersona(persona)}
+              onClick={() => handlePersonaChange(persona)}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               className={cn(
                 "w-full flex items-center gap-3 p-3 rounded-lg transition-all",
                 selectedPersona.id === persona.id
@@ -130,64 +151,117 @@ export function PersonaSidebar() {
                   : "hover:bg-zinc-900"
               )}
             >
-              <div className={cn("p-2 rounded-full", persona.color + "/20")}>
+              <motion.div
+                className={cn("p-2 rounded-full", persona.color + "/20")}
+                animate={{
+                  scale: selectedPersona.id === persona.id ? 1.05 : 1,
+                }}
+                transition={{ duration: 0.2 }}
+              >
                 <div className={cn("p-1 rounded-full", persona.color)}>
                   {persona.icon}
                 </div>
-              </div>
+              </motion.div>
               <div className="text-left flex-1">
                 <p className="text-sm font-medium text-white">{persona.name}</p>
                 <p className="text-xs text-zinc-400">{persona.role}</p>
               </div>
-            </button>
+            </motion.button>
           ))}
         </div>
       </div>
 
-      <div className="border-b border-zinc-800 p-4 bg-zinc-900/50">
-        <div className="flex items-center gap-3 mb-2">
-          <div className={cn("p-2 rounded-full", selectedPersona.color + "/20")}>
-            <div className={cn("p-1 rounded-full", selectedPersona.color)}>
-              {selectedPersona.icon}
-            </div>
+      <div className="overflow-hidden">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={selectedPersona.id}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="border-b border-zinc-800 p-4 bg-zinc-900/50"
+            style={{ willChange: "transform, opacity" }}
+          >
+          <div className="flex items-center gap-3 mb-2">
+            <motion.div
+              className={cn("p-2 rounded-full", selectedPersona.color + "/20")}
+              initial={{ scale: 0.8, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ duration: 0.4, ease: "backOut" }}
+            >
+              <div className={cn("p-1 rounded-full", selectedPersona.color)}>
+                {selectedPersona.icon}
+              </div>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1, duration: 0.3 }}
+            >
+              <p className="text-sm font-medium text-white">{selectedPersona.name}</p>
+              <p className="text-xs text-zinc-400">{selectedPersona.role}</p>
+            </motion.div>
           </div>
-          <div>
-            <p className="text-sm font-medium text-white">{selectedPersona.name}</p>
-            <p className="text-xs text-zinc-400">{selectedPersona.role}</p>
-          </div>
-        </div>
-        <p className="text-xs text-zinc-500">{selectedPersona.description}</p>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.3 }}
+            className="text-xs text-zinc-500"
+          >
+            {selectedPersona.description}
+          </motion.p>
+          </motion.div>
+        </AnimatePresence>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={cn(
-              "flex flex-col",
-              message.role === "user" ? "items-end" : "items-start"
-            )}
-          >
-            <div
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4">
+        <AnimatePresence mode="popLayout">
+          {messages.map((message, index) => (
+            <motion.div
+              key={message.id}
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ 
+                opacity: 0, 
+                y: -20, 
+                scale: 0.95,
+                transition: { duration: 0.2 }
+              }}
+              transition={{ 
+                duration: 0.3, 
+                delay: index * 0.05,
+                ease: "easeOut"
+              }}
               className={cn(
-                "max-w-[85%] rounded-lg p-3",
-                message.role === "user"
-                  ? "bg-blue-600 text-white"
-                  : "bg-zinc-800 text-zinc-200"
+                "flex flex-col",
+                message.role === "user" ? "items-end" : "items-start"
               )}
             >
-              <p className="text-sm">{message.content}</p>
-            </div>
-            {message.role === "persona" && (
-              <button
-                onClick={toggleVoice}
-                className="mt-1 p-1 hover:bg-zinc-800 rounded"
+              <motion.div
+                className={cn(
+                  "max-w-[85%] rounded-lg p-3",
+                  message.role === "user"
+                    ? "bg-blue-600 text-white"
+                    : "bg-zinc-800 text-zinc-200"
+                )}
+                whileHover={{ scale: 1.02 }}
+                transition={{ duration: 0.2 }}
               >
-                <Volume2 className={cn("h-4 w-4", isSpeaking ? "text-green-400" : "text-zinc-500")} />
-              </button>
-            )}
-          </div>
-        ))}
+                <p className="text-sm">{message.content}</p>
+              </motion.div>
+              {message.role === "persona" && (
+                <motion.button
+                  onClick={toggleVoice}
+                  className="mt-1 p-1 hover:bg-zinc-800 rounded"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <Volume2 className={cn("h-4 w-4", isSpeaking ? "text-green-400" : "text-zinc-500")} />
+                </motion.button>
+              )}
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
 
       <div className="border-t border-zinc-800 p-4 space-y-3">

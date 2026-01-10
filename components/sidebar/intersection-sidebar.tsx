@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMapStore } from "@/stores/map-store";
 import { X, Map as MapIcon } from "lucide-react";
@@ -9,6 +10,14 @@ import { PhotoProvider } from "react-photo-view";
 
 export function IntersectionSidebar() {
   const { selectedHotspot, selectHotspot } = useMapStore();
+  const [activeTab, setActiveTab] = useState("overview");
+
+  // Reset to overview tab when hotspot changes
+  useEffect(() => {
+    if (selectedHotspot) {
+      setActiveTab("overview");
+    }
+  }, [selectedHotspot?.id]);
 
   return (
     <motion.aside
@@ -22,7 +31,7 @@ export function IntersectionSidebar() {
         damping: 25,
         stiffness: 200
       }}
-      className="fixed right-0 top-0 z-50 h-screen w-[400px] border-l border-zinc-800 bg-zinc-950 flex flex-col"
+      className="fixed right-0 top-0 z-50 h-screen w-[400px] border-l border-zinc-800 bg-zinc-950 flex flex-col overflow-hidden"
     >
       <AnimatePresence mode="wait">
         {selectedHotspot ? (
@@ -55,34 +64,87 @@ export function IntersectionSidebar() {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden p-4">
               <PhotoProvider>
-                <Tabs defaultValue="overview" className="w-full">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <TabsList className="grid w-full grid-cols-3 bg-zinc-900">
-                    <TabsTrigger value="overview">Overview</TabsTrigger>
-                    <TabsTrigger value="audit">Safety Audit</TabsTrigger>
-                    <TabsTrigger value="reimagine">Re-imagine</TabsTrigger>
+                    <TabsTrigger 
+                      value="overview"
+                      className="transition-all hover:scale-105 active:scale-95"
+                    >
+                      Overview
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="audit"
+                      className="transition-all hover:scale-105 active:scale-95"
+                    >
+                      Safety Audit
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="reimagine"
+                      className="transition-all hover:scale-105 active:scale-95"
+                    >
+                      Re-imagine
+                    </TabsTrigger>
                   </TabsList>
 
-                  <TabsContent value="overview" className="mt-4">
-                    <OverviewTab hotspot={selectedHotspot} />
-                  </TabsContent>
+                  <div className="relative mt-4 overflow-hidden">
+                    <AnimatePresence mode="wait">
+                      {activeTab === "overview" && (
+                        <motion.div
+                          key="overview"
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -20 }}
+                          transition={{
+                            duration: 0.3,
+                            ease: "easeInOut",
+                          }}
+                          style={{ willChange: "transform, opacity" }}
+                        >
+                          <OverviewTab hotspot={selectedHotspot} />
+                        </motion.div>
+                      )}
 
-                  <TabsContent value="audit" className="mt-4">
-                    <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-                      <p className="text-sm text-zinc-400">
-                        Generate a safety audit to see AI analysis
-                      </p>
-                    </div>
-                  </TabsContent>
+                      {activeTab === "audit" && (
+                        <motion.div
+                          key="audit"
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -20 }}
+                          transition={{
+                            duration: 0.3,
+                            ease: "easeInOut",
+                          }}
+                          className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4"
+                          style={{ willChange: "transform, opacity" }}
+                        >
+                          <p className="text-sm text-zinc-400">
+                            Generate a safety audit to see AI analysis
+                          </p>
+                        </motion.div>
+                      )}
 
-                  <TabsContent value="reimagine" className="mt-4">
-                    <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-                      <p className="text-sm text-zinc-400">
-                        Re-imagine this intersection with AI
-                      </p>
-                    </div>
-                  </TabsContent>
+                      {activeTab === "reimagine" && (
+                        <motion.div
+                          key="reimagine"
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -20 }}
+                          transition={{
+                            duration: 0.3,
+                            ease: "easeInOut",
+                          }}
+                          className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4"
+                          style={{ willChange: "transform, opacity" }}
+                        >
+                          <p className="text-sm text-zinc-400">
+                            Re-imagine this intersection with AI
+                          </p>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 </Tabs>
               </PhotoProvider>
             </div>
