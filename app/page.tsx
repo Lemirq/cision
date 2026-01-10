@@ -129,7 +129,7 @@ export default function HomePage() {
 
         {/* Subtext */}
         <p className="text-white/60 text-lg md:text-xl max-w-2xl mb-8">
-          Design and simulate urban development in minutes, not months.
+          Design and simulate urban development in minutes.
         </p>
 
         {/* CTA Button */}
