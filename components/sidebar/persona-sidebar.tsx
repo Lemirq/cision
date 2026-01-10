@@ -271,7 +271,7 @@ export function PersonaSidebar() {
             </div>
 
             {/* Agent List */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {PERSONAS.map((persona, index) => (
                 <motion.button
                   key={persona.id}
@@ -380,7 +380,7 @@ export function PersonaSidebar() {
             </div>
 
             {/* Transcript Area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {transcriptMessages.length === 0 && !isCallInProgress && (
                 <div className="flex flex-col items-center justify-center h-full text-center px-4">
                   <div

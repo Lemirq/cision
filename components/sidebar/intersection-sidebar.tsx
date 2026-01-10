@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMapStore } from "@/stores/map-store";
 import { X } from "lucide-react";
@@ -11,13 +11,42 @@ import { PhotoProvider } from "react-photo-view";
 export function IntersectionSidebar() {
   const { selectedHotspot, selectHotspot } = useMapStore();
   const [activeTab, setActiveTab] = useState("overview");
+  const [direction, setDirection] = useState(1);
+
+  // Tab order for directional animations
+  const tabOrder = ["overview", "audit", "reimagine"];
 
   // Reset to overview tab when hotspot changes
   useEffect(() => {
     if (selectedHotspot) {
       setActiveTab("overview");
+      setDirection(1);
     }
   }, [selectedHotspot?.id]);
+
+  // Handle tab change
+  const handleTabChange = (newTab: string) => {
+    const currentIndex = tabOrder.indexOf(activeTab);
+    const newIndex = tabOrder.indexOf(newTab);
+    const newDirection = newIndex > currentIndex ? 1 : -1;
+    setDirection(newDirection);
+    setActiveTab(newTab);
+  };
+
+  const variants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? 80 : -80,
+      opacity: 0,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+    },
+    exit: (direction: number) => ({
+      x: direction < 0 ? 80 : -80,
+      opacity: 0,
+    }),
+  };
 
   return (
     <AnimatePresence mode="wait">
@@ -69,9 +98,9 @@ export function IntersectionSidebar() {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto p-4 scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               <PhotoProvider>
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
                   <TabsList className="grid w-full grid-cols-3 bg-zinc-900">
                     <TabsTrigger
                       value="overview"
@@ -94,16 +123,18 @@ export function IntersectionSidebar() {
                   </TabsList>
 
                   <div className="relative mt-4 overflow-hidden">
-                    <AnimatePresence mode="wait">
+                    <AnimatePresence mode="wait" custom={direction}>
                       {activeTab === "overview" && (
                         <motion.div
                           key="overview"
-                          initial={{ opacity: 0, x: 20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -20 }}
+                          custom={direction}
+                          variants={variants}
+                          initial="enter"
+                          animate="center"
+                          exit="exit"
                           transition={{
-                            duration: 0.3,
-                            ease: "easeInOut",
+                            duration: 0.25,
+                            ease: [0.25, 0.1, 0.25, 1],
                           }}
                           style={{ willChange: "transform, opacity" }}
                         >
@@ -114,12 +145,14 @@ export function IntersectionSidebar() {
                       {activeTab === "audit" && (
                         <motion.div
                           key="audit"
-                          initial={{ opacity: 0, x: 20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -20 }}
+                          custom={direction}
+                          variants={variants}
+                          initial="enter"
+                          animate="center"
+                          exit="exit"
                           transition={{
-                            duration: 0.3,
-                            ease: "easeInOut",
+                            duration: 0.25,
+                            ease: [0.25, 0.1, 0.25, 1],
                           }}
                           className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4"
                           style={{ willChange: "transform, opacity" }}
@@ -133,12 +166,14 @@ export function IntersectionSidebar() {
                       {activeTab === "reimagine" && (
                         <motion.div
                           key="reimagine"
-                          initial={{ opacity: 0, x: 20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -20 }}
+                          custom={direction}
+                          variants={variants}
+                          initial="enter"
+                          animate="center"
+                          exit="exit"
                           transition={{
-                            duration: 0.3,
-                            ease: "easeInOut",
+                            duration: 0.25,
+                            ease: [0.25, 0.1, 0.25, 1],
                           }}
                           className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4"
                           style={{ willChange: "transform, opacity" }}
