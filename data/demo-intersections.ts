@@ -11,7 +11,7 @@ export const DEMO_HOTSPOTS: ClusteredHotspot[] = [
     cyclist_count: 18,
     pedestrian_count: 12,
     address: "Queen St W & Spadina Ave",
-    intersection: "Queen & Spadina",
+    intersection: "Queen & Spadinas",
   },
   {
     id: "demo-2",
