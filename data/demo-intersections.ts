@@ -1,0 +1,40 @@
+import type { ClusteredHotspot } from "@/types/collision";
+
+export const DEMO_HOTSPOTS: ClusteredHotspot[] = [
+  {
+    id: "demo-1",
+    centroid: { lat: 43.6489, lng: -79.3957 },
+    collisions: [],
+    severity_score: 85,
+    total_count: 47,
+    fatal_count: 2,
+    cyclist_count: 18,
+    pedestrian_count: 12,
+    address: "Queen St W & Spadina Ave",
+    intersection: "Queen & Spadina",
+  },
+  {
+    id: "demo-2",
+    centroid: { lat: 43.6601, lng: -79.4481 },
+    collisions: [],
+    severity_score: 72,
+    total_count: 38,
+    fatal_count: 1,
+    cyclist_count: 15,
+    pedestrian_count: 8,
+    address: "Bloor St W & Lansdowne Ave",
+    intersection: "Bloor & Lansdowne",
+  },
+  {
+    id: "demo-3",
+    centroid: { lat: 43.6555, lng: -79.3806 },
+    collisions: [],
+    severity_score: 68,
+    total_count: 34,
+    fatal_count: 1,
+    cyclist_count: 12,
+    pedestrian_count: 10,
+    address: "Dundas St W & University Ave",
+    intersection: "Dundas & University",
+  },
+];
