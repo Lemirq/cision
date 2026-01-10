@@ -182,16 +182,7 @@
 }
 
 @layer base {
-  html {
-    height: 100vh;
-    overflow: hidden;
-  }
-  
   body {
     letter-spacing: var(--tracking-normal);
-    margin: 0;
-    padding: 0;
-    height: 100vh;
-    overflow: hidden;
   }
 }

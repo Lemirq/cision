@@ -5,7 +5,6 @@ import { useMapStore } from "@/stores/map-store";
 import { X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OverviewTab } from "./overview-tab";
-import { PhotoProvider } from "react-photo-view";
 
 export function IntersectionSidebar() {
   const { selectedHotspot, selectHotspot } = useMapStore();
@@ -61,35 +60,33 @@ export function IntersectionSidebar() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4">
-                  <PhotoProvider>
-                    <Tabs defaultValue="overview" className="w-full">
-                      <TabsList className="grid w-full grid-cols-3 bg-zinc-900">
-                        <TabsTrigger value="overview">Overview</TabsTrigger>
-                        <TabsTrigger value="audit">Safety Audit</TabsTrigger>
-                        <TabsTrigger value="reimagine">Re-imagine</TabsTrigger>
-                      </TabsList>
+                  <Tabs defaultValue="overview" className="w-full">
+                    <TabsList className="grid w-full grid-cols-3 bg-zinc-900">
+                      <TabsTrigger value="overview">Overview</TabsTrigger>
+                      <TabsTrigger value="audit">Safety Audit</TabsTrigger>
+                      <TabsTrigger value="reimagine">Re-imagine</TabsTrigger>
+                    </TabsList>
 
-                      <TabsContent value="overview" className="mt-4">
-                        <OverviewTab hotspot={selectedHotspot} />
-                      </TabsContent>
+                    <TabsContent value="overview" className="mt-4">
+                      <OverviewTab hotspot={selectedHotspot} />
+                    </TabsContent>
 
-                      <TabsContent value="audit" className="mt-4">
-                        <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-                          <p className="text-sm text-zinc-400">
-                            Generate a safety audit to see AI analysis
-                          </p>
-                        </div>
-                      </TabsContent>
+                    <TabsContent value="audit" className="mt-4">
+                      <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+                        <p className="text-sm text-zinc-400">
+                          Generate a safety audit to see AI analysis
+                        </p>
+                      </div>
+                    </TabsContent>
 
-                      <TabsContent value="reimagine" className="mt-4">
-                        <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-                          <p className="text-sm text-zinc-400">
-                            Re-imagine this intersection with AI
-                          </p>
-                        </div>
-                      </TabsContent>
-                    </Tabs>
-                  </PhotoProvider>
+                    <TabsContent value="reimagine" className="mt-4">
+                      <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+                        <p className="text-sm text-zinc-400">
+                          Re-imagine this intersection with AI
+                        </p>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
                 </div>
               </motion.div>
         </motion.aside>
