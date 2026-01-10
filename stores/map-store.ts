@@ -12,9 +12,11 @@ interface MapState {
   };
   selectedHotspot: ClusteredHotspot | null;
   sidebarOpen: boolean;
+  highlightedRoad: string | null;
   setViewport: (viewport: Partial<MapState["viewport"]>) => void;
   selectHotspot: (hotspot: ClusteredHotspot | null) => void;
   flyTo: (lng: number, lat: number, zoom?: number) => void;
+  highlightRoad: (roadName: string | null) => void;
 }
 
 export const useMapStore = create<MapState>((set) => ({
@@ -27,6 +29,7 @@ export const useMapStore = create<MapState>((set) => ({
   },
   selectedHotspot: null,
   sidebarOpen: false,
+  highlightedRoad: null,
   setViewport: (viewport) =>
     set((state) => ({ viewport: { ...state.viewport, ...viewport } })),
   selectHotspot: (hotspot) =>
@@ -35,4 +38,5 @@ export const useMapStore = create<MapState>((set) => ({
     set((state) => ({
       viewport: { ...state.viewport, longitude: lng, latitude: lat, zoom },
     })),
+  highlightRoad: (roadName) => set({ highlightedRoad: roadName }),
 }));

@@ -11,7 +11,7 @@ interface CityMapProps {
 }
 
 export function CityMap({ hotspots }: CityMapProps) {
-  const { viewport, setViewport, selectHotspot, selectedHotspot } = useMapStore();
+  const { viewport, setViewport, selectHotspot, selectedHotspot, highlightedRoad } = useMapStore();
   const mapRef = useRef<MapRef>(null);
 
   useEffect(() => {
@@ -43,6 +43,30 @@ export function CityMap({ hotspots }: CityMapProps) {
   const geojson = {
     type: "FeatureCollection" as const,
     features: hotspots.map((hotspot) => ({
+      type: "Feature" as const,
+      geometry: {
+        type: "Point" as const,
+        coordinates: [hotspot.centroid.lng, hotspot.centroid.lat] as [number, number],
+      },
+      properties: {
+        id: hotspot.id,
+        severity: hotspot.severity_score,
+        intersection: hotspot.intersection,
+        address: hotspot.address,
+      },
+    })),
+  };
+
+  // Filter hotspots on highlighted road
+  const highlightedHotspots = highlightedRoad
+    ? hotspots.filter((hotspot) =>
+        hotspot.intersection.toLowerCase().includes(highlightedRoad.toLowerCase())
+      )
+    : [];
+
+  const highlightedGeojson = {
+    type: "FeatureCollection" as const,
+    features: highlightedHotspots.map((hotspot) => ({
       type: "Feature" as const,
       geometry: {
         type: "Point" as const,
@@ -134,12 +158,34 @@ export function CityMap({ hotspots }: CityMapProps) {
               50, "#f59e0b",
               80, "#ef4444",
             ],
-            "circle-opacity": 0.8,
+            "circle-opacity": highlightedRoad ? 0.3 : 0.8,
             "circle-stroke-width": 2,
             "circle-stroke-color": "#ffffff",
           }}
         />
       </Source>
+
+      {highlightedRoad && highlightedHotspots.length > 0 && (
+        <Source id="highlighted-hotspots" type="geojson" data={highlightedGeojson}>
+          <Layer
+            id="highlighted-circles"
+            type="circle"
+            paint={{
+              "circle-radius": [
+                "interpolate",
+                ["linear"],
+                ["get", "severity"],
+                50, 12,
+                100, 24,
+              ],
+              "circle-color": "#3b82f6",
+              "circle-opacity": 0.9,
+              "circle-stroke-width": 3,
+              "circle-stroke-color": "#60a5fa",
+            }}
+          />
+        </Source>
+      )}
     </Map>
   );
 }
