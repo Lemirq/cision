@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useMapStore } from "@/stores/map-store";
 import { X, Map as MapIcon } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { OverviewTab } from "./overview-tab";
 
 export function IntersectionSidebar() {
   const { selectedHotspot, selectHotspot } = useMapStore();
@@ -44,11 +45,7 @@ export function IntersectionSidebar() {
             </TabsList>
 
             <TabsContent value="overview" className="mt-4">
-              <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-                <p className="text-sm text-zinc-400">
-                  Click &quot;Safety Audit&quot; to generate AI analysis
-                </p>
-              </div>
+              <OverviewTab hotspot={selectedHotspot} />
             </TabsContent>
 
             <TabsContent value="audit" className="mt-4">
