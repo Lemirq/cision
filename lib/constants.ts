@@ -4,7 +4,7 @@ export const MAP_CONFIG = {
   HOTSPOT_ZOOM: 16,
   MAPBOX_STYLE: "mapbox://styles/mapbox/dark-v11",
   NORTH_AMERICA_CENTER: [-98.5795, 39.8283] as [number, number],
-  NORTH_AMERICA_ZOOM: 3,
+  NORTH_AMERICA_ZOOM: 1.5,
 };
 
 export const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === "true";

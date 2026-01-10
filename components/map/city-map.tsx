@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import Map, { NavigationControl, Source, Layer, Marker, MapRef } from "react-map-gl/mapbox";
+import Map, { NavigationControl, Source, Layer, MapRef, type MapMouseEvent } from "react-map-gl/mapbox";
 import { useMapStore } from "@/stores/map-store";
 import type { ClusteredHotspot } from "@/types/collision";
 import { MAP_CONFIG } from "@/lib/constants";
@@ -11,7 +11,7 @@ interface CityMapProps {
 }
 
 export function CityMap({ hotspots }: CityMapProps) {
-  const { viewport, setViewport, selectHotspot } = useMapStore();
+  const { viewport, setViewport, selectHotspot, selectedHotspot } = useMapStore();
   const mapRef = useRef<MapRef>(null);
 
   useEffect(() => {
@@ -28,6 +28,18 @@ export function CityMap({ hotspots }: CityMapProps) {
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    if (selectedHotspot) {
+      mapRef.current?.flyTo({
+        center: [selectedHotspot.centroid.lng, selectedHotspot.centroid.lat],
+        zoom: MAP_CONFIG.HOTSPOT_ZOOM,
+        pitch: 60,
+        duration: 2000,
+        essential: true,
+      });
+    }
+  }, [selectedHotspot]);
+
   const geojson = {
     type: "FeatureCollection" as const,
     features: hotspots.map((hotspot) => ({
@@ -43,17 +55,64 @@ export function CityMap({ hotspots }: CityMapProps) {
     })),
   };
 
+  const handleMapClick = (event: MapMouseEvent) => {
+    if (!event.features || event.features.length === 0) return;
+    
+    const feature = event.features[0];
+    const hotspotId = feature.properties?.id;
+    
+    if (hotspotId) {
+      const hotspot = hotspots.find((h) => h.id === hotspotId);
+      if (hotspot) {
+        selectHotspot(hotspot);
+      }
+    }
+  };
+
   return (
     <Map
       ref={mapRef}
       {...viewport}
       onMove={(evt) => setViewport(evt.viewState)}
+      onClick={handleMapClick}
+      interactiveLayerIds={["hotspot-circles"]}
       mapStyle={MAP_CONFIG.MAPBOX_STYLE}
       mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
       style={{ width: "100%", height: "100%" }}
       antialias={true}
     >
       <NavigationControl position="bottom-right" />
+
+      <Layer
+        id="3d-buildings"
+        source="composite"
+        source-layer="building"
+        filter={["==", "extrude", "true"]}
+        type="fill-extrusion"
+        minzoom={14}
+        paint={{
+          "fill-extrusion-color": "#27272a",
+          "fill-extrusion-height": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            15,
+            0,
+            15.05,
+            ["get", "height"],
+          ],
+          "fill-extrusion-base": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            15,
+            0,
+            15.05,
+            ["get", "min_height"],
+          ],
+          "fill-extrusion-opacity": 0.8,
+        }}
+      />
       
       <Source id="hotspots" type="geojson" data={geojson}>
         <Layer
@@ -81,18 +140,6 @@ export function CityMap({ hotspots }: CityMapProps) {
           }}
         />
       </Source>
-
-      {hotspots.map((hotspot) => (
-        <Marker
-          key={hotspot.id}
-          longitude={hotspot.centroid.lng}
-          latitude={hotspot.centroid.lat}
-          onClick={(e) => {
-            e.originalEvent.stopPropagation();
-            selectHotspot(hotspot);
-          }}
-        />
-      ))}
     </Map>
   );
 }
