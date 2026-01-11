@@ -25,7 +25,11 @@ interface OverviewTabProps {
   collision?: CollisionPoint | null;
   placeInfo?: PlaceInfo | null;
   onImageReplaced?: (imageUrl: string | null) => void; // Callback when image is replaced
-  replacedImageUrl?: string | null; // Current replaced image URL
+  currentImageUrl?: string | null; // Current displayed image URL
+  carouselImages?: Array<{ id: string; imgUrl: string; isOriginal: boolean }>;
+  selectedImageId?: string;
+  onRevertImage?: (imageId: string) => void;
+  onSelectImage?: (imageId: string) => void;
 }
 
 export function OverviewTab({
@@ -33,7 +37,11 @@ export function OverviewTab({
   collision,
   placeInfo,
   onImageReplaced,
-  replacedImageUrl,
+  currentImageUrl,
+  carouselImages = [],
+  selectedImageId,
+  onRevertImage,
+  onSelectImage,
 }: OverviewTabProps) {
   const displayAddress = placeInfo?.formattedAddress || hotspot.address;
   const displayLocation =
@@ -66,7 +74,7 @@ export function OverviewTab({
         hour={collision?.hour}
         year={collision?.year}
         month={collision?.month}
-        replacedImageUrl={replacedImageUrl}
+        replacedImageUrl={currentImageUrl}
       />
 
       {/* Show cluster information if it's a cluster (multiple collisions) */}

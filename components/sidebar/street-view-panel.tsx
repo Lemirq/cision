@@ -104,7 +104,7 @@ export function StreetViewPanel({ lat, lng, date, hour, year, month, replacedIma
   };
 
   return (
-    <div className="relative overflow-hidden rounded-lg">
+    <div className="relative overflow-hidden">
       {isLoading && !hasError && (
         <div className="absolute inset-0 bg-zinc-800 animate-pulse z-10" />
       )}
@@ -123,7 +123,7 @@ export function StreetViewPanel({ lat, lng, date, hour, year, month, replacedIma
               ref={imageRef}
               src={displayUrl}
               alt={replacedImageUrl ? "Redesigned Intersection" : "Street View"}
-              className="w-full h-64 object-cover cursor-pointer"
+              className="w-full h-64 object-contain cursor-pointer"
               onLoad={() => setIsLoading(false)}
               onError={handleImageError}
               onClick={(e) => {

@@ -206,7 +206,7 @@ export function SafetyAuditSidebar({ isOpen = false, onClose }: SafetyAuditSideb
           label: "Signage",
           value: safetyAudit.metrics.signage,
           icon: Signpost,
-          color: "blue" as const,
+          color: "red" as const,
         },
         {
           label: "Lighting",
@@ -230,13 +230,13 @@ export function SafetyAuditSidebar({ isOpen = false, onClose }: SafetyAuditSideb
           label: "Pedestrian Infrastructure",
           value: safetyAudit.metrics.pedestrianInfrastructure,
           icon: User,
-          color: "green" as const,
+          color: "amber" as const,
         },
         {
           label: "Traffic Calming",
           value: safetyAudit.metrics.trafficCalming,
           icon: Gauge,
-          color: "amber" as const,
+          color: "green" as const,
         },
       ]
     : [];
@@ -283,25 +283,6 @@ export function SafetyAuditSidebar({ isOpen = false, onClose }: SafetyAuditSideb
             )}
             {showContent && safetyAudit && (
               <>
-                {/* 360° View - Stitched Composite Image */}
-                {safetyAudit.stitchedImageUrl && (
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider">
-                      360° View
-                    </h3>
-                    <div className="relative rounded-lg overflow-hidden border border-zinc-800 bg-zinc-900/50">
-                      <img
-                        src={safetyAudit.stitchedImageUrl}
-                        alt="360° Street View composite (2x2 grid: N, E, S, W)"
-                        className="w-full h-auto object-contain"
-                      />
-                    </div>
-                    <p className="text-xs text-zinc-500 text-center">
-                      4-direction composite (N, E, S, W)
-                    </p>
-                  </div>
-                )}
-
                 {/* Safety Score */}
                 <ScoreBadge score={safetyScore} label="Safety Score" />
 

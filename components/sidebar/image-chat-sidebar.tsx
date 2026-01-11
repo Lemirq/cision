@@ -47,20 +47,39 @@ export function ImageChatSidebar({ imageSrc, onImageReplaced, onClose }: ImageCh
     scrollToBottom();
   }, [messages]);
 
+  // Track processed image URLs to prevent duplicates
+  const processedImagesRef = useRef<Set<string>>(new Set());
+  const lastProcessedMessageIdRef = useRef<string | null>(null);
+
   // Watch for tool completion and trigger image replacement
   useEffect(() => {
     const lastMessage = messages[messages.length - 1];
+    if (!lastMessage || lastMessage.id === lastProcessedMessageIdRef.current) {
+      return;
+    }
+
     if (lastMessage?.role === "assistant") {
       for (const part of lastMessage.parts || []) {
         if (part.type === "tool-generateImage" && part.state === "output-available") {
           const output = part.output as { success: boolean; image?: string; error?: string };
           if (output.success && output.image && onImageReplaced) {
-            onImageReplaced(output.image);
+            // Check if we've already processed this image
+            if (!processedImagesRef.current.has(output.image)) {
+              processedImagesRef.current.add(output.image);
+              lastProcessedMessageIdRef.current = lastMessage.id;
+              onImageReplaced(output.image);
+            }
           }
         }
       }
     }
   }, [messages, onImageReplaced]);
+
+  // Reset processed images when imageSrc changes
+  useEffect(() => {
+    processedImagesRef.current.clear();
+    lastProcessedMessageIdRef.current = null;
+  }, [imageSrc]);
 
   const handleSend = () => {
     if (!input.trim() || isLoading || !imageSrc) return;
