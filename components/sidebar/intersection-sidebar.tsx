@@ -252,6 +252,7 @@ export function IntersectionSidebar() {
                 photoWrapClassName="photo-view-with-sidebar"
                 photoClosable={false}
                 maskOpacity={0.8}
+                bannerVisible={false}
                 overlayRender={({ images, index, onClose: photoViewClose }) => {
                   const currentImage = images[index];
                   return (
