@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useEffect } from "react";
 import { RotateCw, Maximize2, X, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,9 +10,13 @@ import { DefaultChatTransport } from "ai";
 interface StreetViewPanelProps {
   lat: number;
   lng: number;
+  date?: string; // Date of the crash (YYYY-MM-DD format or YYYY-MM)
+  hour?: string; // Hour of the crash (0-23)
+  year?: string;
+  month?: string;
 }
 
-export function StreetViewPanel({ lat, lng }: StreetViewPanelProps) {
+export function StreetViewPanel({ lat, lng, date, hour, year, month }: StreetViewPanelProps) {
   const [heading, setHeading] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -21,6 +25,41 @@ export function StreetViewPanel({ lat, lng }: StreetViewPanelProps) {
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
+
+  // Construct date parameter for Google Street View API
+  // Format: YYYY-MM or YYYY-MM-DD
+  // Using historical imagery from the crash date helps get imagery closer to that time
+  const formatDateParam = (): string => {
+    if (date) {
+      // Try to parse and normalize the date format
+      // Handle formats like "2023-10-15", "10/15/2023", "2023-10", etc.
+      const dateMatch = date.match(/(\d{4})[-\/](\d{1,2})[-\/]?(\d{1,2})?/);
+      if (dateMatch) {
+        const [, year, month, day] = dateMatch;
+        const monthNum = month.padStart(2, "0");
+        if (day) {
+          const dayNum = day.padStart(2, "0");
+          return `${year}-${monthNum}-${dayNum}`;
+        }
+        return `${year}-${monthNum}`;
+      }
+      // If it's already in YYYY-MM or YYYY-MM-DD format, use it directly
+      if (date.match(/^\d{4}-\d{2}(-\d{2})?$/)) {
+        return date;
+      }
+    }
+    
+    // Fall back to constructing from year and month
+    if (year && month) {
+      const monthNum = month.padStart(2, "0");
+      return `${year}-${monthNum}`;
+    }
+    
+    return "";
+  };
+
+  const formattedDate = formatDateParam();
+  const dateParam = formattedDate ? `&date=${formattedDate}` : "";
 
   // Use maximum quality (640x640) for thumbnail and preview
   // Google Street View Static API maximum is 640x640 pixels
@@ -57,6 +96,12 @@ export function StreetViewPanel({ lat, lng }: StreetViewPanelProps) {
     setHasError(false);
     setHeading((prev) => (prev + 90) % 360);
   };
+
+  // Update image URL when date or hour changes
+  useEffect(() => {
+    setIsLoading(true);
+    setHasError(false);
+  }, [date, hour, year, month, lat, lng]);
 
   const handleExpand = (e: React.MouseEvent) => {
     e.stopPropagation();
