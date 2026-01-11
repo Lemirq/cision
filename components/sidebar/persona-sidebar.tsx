@@ -19,7 +19,7 @@ import {
 import { useConversation } from "@elevenlabs/react";
 import { cn } from "@/lib/utils";
 import { useMapStore } from "@/stores/map-store";
-import { getClusterData, getClusterContext, getFullSafetyAuditContext } from "@/lib/cluster-storage";
+import { getClusterData, getFullSafetyAuditContext } from "@/lib/cluster-storage";
 
 // Agent IDs
 const AGENTS = {

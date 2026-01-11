@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 interface ImageCarouselItem {
@@ -19,7 +19,7 @@ interface ImageCarouselProps {
 
 export function ImageCarousel({
   images,
-  onRevert,
+  onRevert: _onRevert,
   onSelect,
   selectedImageId,
   cardsPerView = 3,

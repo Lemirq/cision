@@ -8,11 +8,7 @@ import Link from "next/link"
 
 export default function HomePage() {
   const [svgContent, setSvgContent] = useState<string>("")
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const [mounted] = useState(true)
 
   useEffect(() => {
     const loadSVG = async () => {

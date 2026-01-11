@@ -81,21 +81,26 @@ export function StreetViewPanel({
 
   // Update image URL when date or hour changes
   useEffect(() => {
-    setIsLoading(true);
-    setHasError(false);
+    setIsLoading(() => true);
+    setHasError(() => false);
   }, [date, hour, year, month, lat, lng]);
 
   // Trigger shine animation when image is replaced
   useEffect(() => {
-    if (replacedImageUrl) {
-      setIsLoading(true);
-      setShowShine(true);
-      // Reset shine after animation completes
-      const timer = setTimeout(() => {
-        setShowShine(false);
-      }, 2000);
-      return () => clearTimeout(timer);
+    if (!replacedImageUrl) {
+      return;
     }
+    
+    setIsLoading(true);
+    setShowShine(true);
+    
+    // Reset shine after animation completes
+    const timer = setTimeout(() => {
+      setShowShine(false);
+    }, 2000);
+    
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [replacedImageUrl]);
 
   const handleExpand = (e: React.MouseEvent) => {

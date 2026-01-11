@@ -9,7 +9,6 @@ import {
   RefreshCw,
   ChevronLeft,
   MapPin,
-  MousePointerClick,
 } from "lucide-react";
 import { MetricProgressBar } from "./metric-progress-bar";
 import { FlawCard } from "./flaw-card";

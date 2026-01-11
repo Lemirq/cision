@@ -28,23 +28,19 @@ export function ImageChatSidebar({
   onClose,
 }: ImageChatSidebarProps) {
   const [input, setInput] = useState("");
-  const [clusterContext, setClusterContext] = useState<string>("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const previousImageRef = useRef<string | undefined>(imageSrc);
 
   // Get infrastructure gaps from store - use polling to avoid subscription issues
-  const [infrastructureGaps, setInfrastructureGaps] = useState<string[]>([]);
+  const [infrastructureGaps, setInfrastructureGaps] = useState<string[]>(() => 
+    clusterId ? getInfrastructureGaps(clusterId) : []
+  );
   
   useEffect(() => {
     if (!clusterId) {
-      setInfrastructureGaps([]);
       return;
     }
-    
-    // Get initial value
-    const gaps = getInfrastructureGaps(clusterId);
-    setInfrastructureGaps(gaps);
     
     // Poll for changes every 500ms
     const interval = setInterval(() => {
@@ -62,24 +58,25 @@ export function ImageChatSidebar({
   }, [clusterId]);
 
   // Load comprehensive cluster context - refresh when clusterId or cluster data changes
+  const [clusterContext, setClusterContext] = useState<string>(() => 
+    clusterId ? getFullSafetyAuditContext(clusterId) : ""
+  );
+  
   useEffect(() => {
-    if (clusterId) {
-      const loadContext = () => {
-        // Use the comprehensive safety audit context function
-        const context = getFullSafetyAuditContext(clusterId);
-        setClusterContext(context);
-      };
-
-      // Load immediately
-      loadContext();
-
-      // Refresh context periodically in case cluster data is updated
-      const intervalId = setInterval(loadContext, 2000); // Check every 2 seconds
-
-      return () => clearInterval(intervalId);
-    } else {
-      setClusterContext("");
+    if (!clusterId) {
+      return;
     }
+    
+    const loadContext = () => {
+      // Use the comprehensive safety audit context function
+      const context = getFullSafetyAuditContext(clusterId);
+      setClusterContext(context);
+    };
+
+    // Refresh context periodically in case cluster data is updated
+    const intervalId = setInterval(loadContext, 2000); // Check every 2 seconds
+
+    return () => clearInterval(intervalId);
   }, [clusterId]);
 
   // Convert imageSrc to absolute URL if needed
@@ -271,7 +268,7 @@ export function ImageChatSidebar({
               <div className="rounded-lg px-3 py-2 text-sm bg-zinc-800 text-zinc-200">
                 <p className="whitespace-pre-wrap break-words">
                   Hello! I can help you redefine this intersection. Describe how
-                  you'd like to improve it, and I'll generate a new image showing
+                  you&apos;d like to improve it, and I&apos;ll generate a new image showing
                   your vision.
                 </p>
               </div>
