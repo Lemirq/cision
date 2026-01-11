@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CityMap } from "@/components/map/city-map";
 import { LeftSidebar } from "@/components/sidebar/left-sidebar";
 import { PersonaSidebar } from "@/components/sidebar/persona-sidebar";
@@ -8,10 +8,30 @@ import { IntersectionSidebar } from "@/components/sidebar/intersection-sidebar";
 import { SafetyAuditSidebar } from "@/components/sidebar/safety-audit-sidebar";
 import { SearchBar } from "@/components/search/search-bar";
 import { DEMO_HOTSPOTS } from "@/data/demo-intersections";
+import { useMapStore } from "@/stores/map-store";
 
 export default function App() {
   const [isVoiceAgentsOpen, setIsVoiceAgentsOpen] = useState(false);
   const [isSafetyAuditOpen, setIsSafetyAuditOpen] = useState(false);
+  const [lastSelectedHotspotId, setLastSelectedHotspotId] = useState<string | null>(null);
+  const selectedHotspot = useMapStore((state) => state.selectedHotspot);
+
+  // Automatically open Safety Audit sidebar when a new hotspot is selected
+  useEffect(() => {
+    if (selectedHotspot) {
+      const hotspotId = selectedHotspot.id;
+      // Only auto-open if this is a different hotspot than the last one
+      if (hotspotId !== lastSelectedHotspotId) {
+        setIsSafetyAuditOpen(true);
+        // Close voice agents when opening safety audit automatically
+        setIsVoiceAgentsOpen(false);
+        setLastSelectedHotspotId(hotspotId);
+      }
+    } else {
+      // Reset when no hotspot is selected
+      setLastSelectedHotspotId(null);
+    }
+  }, [selectedHotspot, lastSelectedHotspotId]);
 
   const handleVoiceAgentsClick = () => {
     setIsVoiceAgentsOpen((prev) => !prev);

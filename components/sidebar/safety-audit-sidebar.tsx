@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useMapStore } from "@/stores/map-store";
-import { X, Loader2, AlertCircle, RefreshCw, ChevronLeft } from "lucide-react";
+import { Loader2, AlertCircle, RefreshCw, ChevronLeft } from "lucide-react";
 import { MetricProgressBar } from "./metric-progress-bar";
 import { FlawCard } from "./flaw-card";
 import { SuggestionCard } from "./suggestion-card";
@@ -263,29 +263,16 @@ export function SafetyAuditSidebar({ isOpen = false, onClose }: SafetyAuditSideb
                 {selectedHotspot?.intersection || selectedHotspot?.address}
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              {onClose && (
-                <button
-                  onClick={onClose}
-                  className="rounded-lg p-2 hover:bg-zinc-800 transition-colors flex items-center"
-                  title="Close"
-                >
-                  <ChevronLeft className="h-5 w-5 text-zinc-400" />
-                  <ChevronLeft className="h-5 w-5 text-zinc-400 -ml-2" />
-                </button>
-              )}
+            {onClose && (
               <button
-                onClick={() => {
-                  selectHotspot(null);
-                  setSafetyAudit(null);
-                  setError(null);
-                  if (onClose) onClose();
-                }}
-                className="rounded-lg p-2 hover:bg-zinc-800 transition-colors"
+                onClick={onClose}
+                className="rounded-lg p-2 hover:bg-zinc-800 transition-colors flex items-center"
+                title="Close"
               >
-                <X className="h-5 w-5 text-zinc-400" />
+                <ChevronLeft className="h-5 w-5 text-zinc-400" />
+                <ChevronLeft className="h-5 w-5 text-zinc-400 -ml-2" />
               </button>
-            </div>
+            )}
           </div>
 
           {/* Content */}

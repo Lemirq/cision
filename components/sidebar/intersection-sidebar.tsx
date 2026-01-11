@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useMapStore } from "@/stores/map-store";
 import { X, Undo2 } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OverviewTab } from "./overview-tab";
 import { PhotoProvider } from "react-photo-view";
 import { ImageChatSidebar } from "./image-chat-sidebar";
@@ -266,39 +265,13 @@ export function IntersectionSidebar() {
                   );
                 }}
               >
-                <Tabs defaultValue="overview" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3 bg-zinc-900">
-                    <TabsTrigger value="overview">Overview</TabsTrigger>
-                    <TabsTrigger value="audit">Safety Audit</TabsTrigger>
-                    <TabsTrigger value="reimagine">Re-imagine</TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="overview" className="mt-4">
-                    <OverviewTab
-                      hotspot={displayHotspot}
-                      collision={selectedCollision}
-                      placeInfo={placeInfo}
-                      onImageReplaced={handleImageReplaced}
-                      replacedImageUrl={replacedImageUrl}
-                    />
-                  </TabsContent>
-
-                  <TabsContent value="audit" className="mt-4">
-                    <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-                      <p className="text-sm text-zinc-400">
-                        Generate a safety audit to see AI analysis
-                      </p>
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="reimagine" className="mt-4">
-                    <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-                      <p className="text-sm text-zinc-400">
-                        Re-imagine this intersection with AI
-                      </p>
-                    </div>
-                  </TabsContent>
-                </Tabs>
+                <OverviewTab
+                  hotspot={displayHotspot}
+                  collision={selectedCollision}
+                  placeInfo={placeInfo}
+                  onImageReplaced={handleImageReplaced}
+                  replacedImageUrl={replacedImageUrl}
+                />
               </PhotoProvider>
             </div>
           </motion.div>
