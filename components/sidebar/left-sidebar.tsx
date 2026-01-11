@@ -2,15 +2,15 @@
 
 import {
   Menu as MenuIcon,
-  Mic,
-  ShieldCheck,
-  MessagesSquare,
-  History,
-  Settings,
+  MessageCircle,
+  AlertTriangle,
+  ChartBar,
+  LogOut,
 } from "lucide-react";
 import { MenuItem, MenuContainer } from "@/components/ui/stack-menu";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface LeftSidebarProps {
   onVoiceAgentsClick?: () => void;
@@ -25,6 +25,17 @@ export function LeftSidebar({
   isVoiceAgentsOpen = false,
   isSafetyAuditOpen = false,
 }: LeftSidebarProps) {
+  const router = useRouter();
+
+  const handleExit = () => {
+    router.push("/");
+  };
+
+  const handleLeaderboard = () => {
+    // Placeholder for future leaderboard functionality
+    console.log("Leaderboard clicked - to be implemented");
+  };
+
   return (
     <aside className="fixed left-0 top-0 z-50 h-screen w-16 border-r border-zinc-800 bg-zinc-950 flex flex-col items-center py-4 gap-4">
       <Link
@@ -47,18 +58,23 @@ export function LeftSidebar({
           <MenuContainer>
             <MenuItem icon={<MenuIcon size={24} strokeWidth={1.5} />} />
             <MenuItem
-              icon={<Mic size={24} strokeWidth={1.5} />}
+              icon={<AlertTriangle size={24} strokeWidth={1.5} />}
+              onClick={onSafetyAuditClick}
+              isActive={isSafetyAuditOpen}
+            />
+            <MenuItem
+              icon={<MessageCircle size={24} strokeWidth={1.5} />}
               onClick={onVoiceAgentsClick}
               isActive={isVoiceAgentsOpen}
             />
             <MenuItem
-              icon={<ShieldCheck size={24} strokeWidth={1.5} />}
-              onClick={onSafetyAuditClick}
-              isActive={isSafetyAuditOpen}
+              icon={<ChartBar size={24} strokeWidth={1.5} />}
+              onClick={handleLeaderboard}
             />
-            <MenuItem icon={<MessagesSquare size={24} strokeWidth={1.5} />} />
-            <MenuItem icon={<History size={24} strokeWidth={1.5} />} />
-            <MenuItem icon={<Settings size={24} strokeWidth={1.5} />} />
+            <MenuItem
+              icon={<LogOut size={24} strokeWidth={1.5} />}
+              onClick={handleExit}
+            />
           </MenuContainer>
         </div>
       </div>
