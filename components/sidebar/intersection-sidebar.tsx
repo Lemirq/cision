@@ -220,7 +220,7 @@ export function IntersectionSidebar() {
             damping: 25,
             stiffness: 200,
           }}
-          className="fixed right-0 top-0 z-50 h-screen w-[400px] border-l border-zinc-800 bg-zinc-950 flex flex-col"
+          className="fixed right-0 top-0 z-30 h-screen w-[400px] border-l border-zinc-800 bg-zinc-950 flex flex-col"
         >
           <motion.div
             key={displayKey}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { RotateCw, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PhotoView } from "react-photo-view";
@@ -21,7 +21,6 @@ export function StreetViewPanel({ lat, lng, date, hour, year, month, replacedIma
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [showShine, setShowShine] = useState(false);
-  const imageRef = useRef<HTMLImageElement>(null);
 
   // Construct date parameter for Google Street View API
   // Format: YYYY-MM or YYYY-MM-DD
@@ -93,8 +92,10 @@ export function StreetViewPanel({ lat, lng, date, hour, year, month, replacedIma
 
   const handleExpand = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (imageRef.current) {
-      imageRef.current.click();
+    // Find and click the image element to open PhotoView
+    const imgElement = document.querySelector(`img[src="${displayUrl}"]`) as HTMLImageElement;
+    if (imgElement) {
+      imgElement.click();
     }
   };
 
@@ -119,20 +120,18 @@ export function StreetViewPanel({ lat, lng, date, hour, year, month, replacedIma
       ) : (
         <div className="relative">
           <PhotoView src={displayUrl}>
-            <motion.img
-              ref={imageRef}
+            <img
               src={displayUrl}
               alt={replacedImageUrl ? "Redesigned Intersection" : "Street View"}
-              className="w-full h-64 object-cover cursor-pointer"
+              className={`w-full h-64 object-cover cursor-pointer ${
+                replacedImageUrl ? "animate-in fade-in zoom-in duration-500" : ""
+              }`}
               onLoad={() => setIsLoading(false)}
               onError={handleImageError}
               onClick={(e) => {
                 // Prevent click from closing PhotoView
                 e.stopPropagation();
               }}
-              initial={replacedImageUrl ? { opacity: 0, scale: 1.05 } : false}
-              animate={replacedImageUrl ? { opacity: 1, scale: 1 } : {}}
-              transition={{ duration: 0.5, ease: "easeOut" }}
             />
           </PhotoView>
           

@@ -20,6 +20,8 @@ interface MapState {
   isGeneratingAudit: boolean;
   // Cluster data storage - maps clusterId to StoredClusterData
   clusterData: Record<string, StoredClusterData>;
+  // All hotspots for normalization calculations
+  allHotspots: ClusteredHotspot[];
   setSidebarOpen: (open: boolean) => void;
   toggleSidebar: () => void;
   setViewport: (viewport: Partial<MapState["viewport"]>) => void;
@@ -33,6 +35,8 @@ interface MapState {
   getClusterData: (clusterId: string) => StoredClusterData | null;
   setClusterData: (clusterId: string, data: StoredClusterData) => void;
   updateClusterData: (clusterId: string, updater: (data: StoredClusterData) => StoredClusterData) => void;
+  // Hotspot management
+  setAllHotspots: (hotspots: ClusteredHotspot[]) => void;
 }
 
 export const useMapStore = create<MapState>((set, get) => ({
@@ -50,6 +54,7 @@ export const useMapStore = create<MapState>((set, get) => ({
   safetyAudit: null,
   isGeneratingAudit: false,
   clusterData: {},
+  allHotspots: [],
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
   toggleSidebar: () =>
     set((state) => ({ sidebarOpen: !state.sidebarOpen })),
@@ -99,4 +104,5 @@ export const useMapStore = create<MapState>((set, get) => ({
       };
     });
   },
+  setAllHotspots: (hotspots) => set({ allHotspots: hotspots }),
 }));

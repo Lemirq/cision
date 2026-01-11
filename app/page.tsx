@@ -85,22 +85,6 @@ export default function HomePage() {
           <span className="text-white font-semibold text-lg">Cision</span>
         </Link>
 
-        {/* Nav Links */}
-        <div className="hidden md:flex items-center gap-8">
-          <a href="#" className="text-white/90 hover:text-white transition-colors text-sm">
-            Home
-          </a>
-          <a href="#" className="text-white/70 hover:text-white transition-colors text-sm">
-            About
-          </a>
-          <a href="#" className="text-white/70 hover:text-white transition-colors text-sm">
-            Pricing
-          </a>
-          <a href="#" className="text-white/70 hover:text-white transition-colors text-sm">
-            Discovery
-          </a>
-        </div>
-
         {/* App Link */}
         <a href="/map" className="flex items-center gap-1 text-white/90 hover:text-white transition-colors text-sm">
           Open App
@@ -163,11 +147,29 @@ export default function HomePage() {
               </>
             }
           >
-            <iframe
-              src="/map"
-              title="Cision Map Preview"
-              className="mx-auto rounded-xl border border-zinc-800 w-[1400px] h-[720px] bg-zinc-900 pointer-events-none"
-            />
+            {/* Replace the src with your actual demo video (e.g., /demo.mp4) */}
+            <video
+              src="/yur.mov"
+              className="mx-auto rounded-xl border border-zinc-800 w-[1400px] h-[720px] bg-zinc-900 object-contain"
+              autoPlay
+              muted
+              playsInline
+              preload="auto"
+              onEnded={(e) => {
+                const v = e.currentTarget
+                // Freeze on the last frame (avoid jumping back to start)
+                try {
+                  v.pause()
+                  // Nudge to the exact end to prevent a black frame on some browsers
+                  if (Number.isFinite(v.duration) && v.duration > 0) {
+                    v.currentTime = v.duration - 0.001
+                  }
+                } catch {}
+              }}
+            >
+              {/* Fallback text for unsupported browsers */}
+              Your browser does not support the video tag.
+            </video>
           </ContainerScroll>
         </div>
       </section>

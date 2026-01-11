@@ -18,6 +18,8 @@ import {
   User,
   Users,
 } from "lucide-react";
+import { useMapStore } from "@/stores/map-store";
+import { normalizeSeverityScore } from "@/lib/severity-normalization";
 
 interface OverviewTabProps {
   hotspot: ClusteredHotspot;
@@ -33,11 +35,18 @@ export function OverviewTab({
   placeInfo,
   replacedImageUrl,
 }: OverviewTabProps) {
+  const allHotspots = useMapStore((state) => state.allHotspots);
   const displayAddress = placeInfo?.formattedAddress || hotspot.address;
   const displayLocation =
     placeInfo?.neighborhood ||
     collision?.neighbourhood ||
     "Intersection location";
+  
+  // Normalize severity score relative to all hotspots
+  const normalizedSeverityScore = normalizeSeverityScore(
+    hotspot.severity_score,
+    allHotspots
+  );
 
   return (
     <div className="space-y-4">
@@ -259,7 +268,7 @@ export function OverviewTab({
 
       <StatsGrid hotspot={hotspot} />
 
-      <SeverityProgressBar score={hotspot.severity_score} />
+      <SeverityProgressBar score={normalizedSeverityScore} />
     </div>
   );
 }

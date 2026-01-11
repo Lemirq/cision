@@ -189,6 +189,36 @@
 
 /* Custom styles for react-photo-view with chat sidebar */
 @layer components {
+  /* Set PhotoView portal z-index - below left sidebar (z-50) and voice agents (z-40) */
+  .PhotoView-Portal {
+    z-index: 30 !important;
+  }
+
+  /* Ensure backdrop has lower z-index than the portal */
+  .PhotoView-Slider__Backdrop {
+    z-index: -1 !important;
+  }
+
+  /* Ensure PhotoView overlay doesn't block sidebars */
+  .PhotoView__PhotoViewOverlay {
+    z-index: 30 !important;
+  }
+
+  /* Ensure left sidebar is above photo view */
+  aside.fixed.left-0 {
+    z-index: 50 !important;
+  }
+
+  /* Ensure PersonaSidebar (Voice Agents) is above photo view */
+  aside.fixed.left-16 {
+    z-index: 40 !important;
+  }
+
+  /* Ensure right sidebar has lower z-index than left sidebar */
+  aside.fixed.right-0 {
+    z-index: 30 !important;
+  }
+
   /* When photo view is open, adjust the layout to accommodate sidebar */
   body.photo-view-open .PhotoView__PhotoViewWrap {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;

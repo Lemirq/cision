@@ -41,7 +41,7 @@ export function SearchBar({ hotspots }: SearchBarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const [placeSuggestions, setPlaceSuggestions] = useState<PlacePrediction[]>(
-    [],
+    []
   );
   const [isLoadingPlaces, setIsLoadingPlaces] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -95,7 +95,7 @@ export function SearchBar({ hotspots }: SearchBarProps) {
     setIsLoadingPlaces(true);
     try {
       const response = await fetch(
-        `/api/places/autocomplete?input=${encodeURIComponent(input)}`,
+        `/api/places/autocomplete?input=${encodeURIComponent(input)}`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch suggestions");
@@ -159,7 +159,7 @@ export function SearchBar({ hotspots }: SearchBarProps) {
       try {
         setIsLoadingPlaces(true);
         const response = await fetch(
-          `/api/places/details?place_id=${encodeURIComponent(result.placeId)}`,
+          `/api/places/details?place_id=${encodeURIComponent(result.placeId)}`
         );
         if (!response.ok) {
           throw new Error("Failed to fetch place details");
@@ -225,8 +225,8 @@ export function SearchBar({ hotspots }: SearchBarProps) {
   const showDropdown = isOpen && (results.length > 0 || isLoadingPlaces);
 
   return (
-    <div ref={searchRef} className="relative w-full max-w-md">
-      <div className="relative w-full">
+    <div ref={searchRef} className="relative w-full">
+      <div className="relative w-full max-w-xl mx-auto">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-300 pointer-events-none" />
         <input
           ref={inputRef}

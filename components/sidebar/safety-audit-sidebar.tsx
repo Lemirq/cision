@@ -1,14 +1,28 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useMapStore } from "@/stores/map-store";
-import { X, Loader2, AlertCircle, RefreshCw } from "lucide-react";
+import {
+  Loader2,
+  AlertCircle,
+  RefreshCw,
+  ChevronLeft,
+  MapPin,
+  MousePointerClick,
+} from "lucide-react";
 import { MetricProgressBar } from "./metric-progress-bar";
 import { FlawCard } from "./flaw-card";
 import { SuggestionCard } from "./suggestion-card";
 import type { SafetyAuditResult } from "@/types/safety-audit";
-import { Signpost, Lightbulb, Navigation, Bike, User, Gauge } from "lucide-react";
+import {
+  Signpost,
+  Lightbulb,
+  Navigation,
+  Bike,
+  User,
+  Gauge,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   getClusterData,
@@ -100,22 +114,66 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-export function SafetyAuditSidebar() {
+function EmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center h-full p-8 space-y-6">
+      <div className="relative">
+        <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-xl" />
+        <div className="relative bg-zinc-900/50 border border-zinc-800 rounded-2xl p-8">
+          <MapPin className="h-12 w-12 text-blue-400 mx-auto mb-4" />
+        </div>
+      </div>
+      <div className="text-center space-y-3 max-w-sm">
+        <h3 className="text-lg font-semibold text-white">
+          No Intersection Selected
+        </h3>
+        <p className="text-sm text-zinc-400 leading-relaxed">
+          Click on a cluster on the map to view a detailed safety audit for that
+          intersection.
+        </p>
+        <div className="flex items-center justify-center gap-2 pt-2">
+          <p className="text-xs text-zinc-500">
+            Select a cluster to get started
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface SafetyAuditSidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export function SafetyAuditSidebar({
+  isOpen = false,
+  onClose,
+}: SafetyAuditSidebarProps) {
   const {
     selectedHotspot,
     safetyAudit,
     isGeneratingAudit,
     setSafetyAudit,
     setIsGeneratingAudit,
-    selectHotspot,
   } = useMapStore();
   const [error, setError] = useState<string | null>(null);
+  // Ref to store the AbortController for the current request
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Load existing audit from state store and auto-generate if needed
   useEffect(() => {
+    // Cancel any ongoing request when selectedHotspot changes
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+      setIsGeneratingAudit(false);
+    }
+
     if (!selectedHotspot) {
       setSafetyAudit(null);
       setError(null);
+      setIsGeneratingAudit(false);
       return;
     }
 
@@ -129,10 +187,9 @@ export function SafetyAuditSidebar() {
       return; // Don't generate if we have stored data
     }
 
-    // Skip if already generating or if audit already exists
-    if (isGeneratingAudit || safetyAudit) {
-      return;
-    }
+    // Create a new AbortController for this request
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
 
     const generateAudit = async () => {
       try {
@@ -156,6 +213,7 @@ export function SafetyAuditSidebar() {
               pedestrian_count: selectedHotspot.pedestrian_count,
             },
           }),
+          signal: abortController.signal,
         });
 
         if (!response.ok) {
@@ -164,19 +222,46 @@ export function SafetyAuditSidebar() {
         }
 
         const auditData: SafetyAuditResult = await response.json();
-        setSafetyAudit(auditData);
 
-        // Save audit to local storage
-        updateSafetyAudit(selectedHotspot.id, auditData, selectedHotspot);
+        // Only update state if the request wasn't aborted
+        if (!abortController.signal.aborted) {
+          setSafetyAudit(auditData);
+          // Save audit to local storage
+          updateSafetyAudit(selectedHotspot.id, auditData, selectedHotspot);
+        }
       } catch (err) {
-        console.error("Error generating safety audit:", err);
-        setError(err instanceof Error ? err.message : "Unknown error");
+        // Don't set error if the request was aborted (user clicked another cluster)
+        if (err instanceof Error && err.name === "AbortError") {
+          console.log("Safety audit request cancelled");
+          return;
+        }
+        // Only update error state if request wasn't aborted
+        if (!abortController.signal.aborted) {
+          console.error("Error generating safety audit:", err);
+          setError(err instanceof Error ? err.message : "Unknown error");
+        }
       } finally {
-        setIsGeneratingAudit(false);
+        // Only update loading state if request wasn't aborted
+        if (!abortController.signal.aborted) {
+          setIsGeneratingAudit(false);
+        }
+        // Clear the ref if this was the current request
+        if (abortControllerRef.current === abortController) {
+          abortControllerRef.current = null;
+        }
       }
     };
 
     generateAudit();
+
+    // Cleanup function to cancel the request if component unmounts or hotspot changes
+    return () => {
+      if (abortControllerRef.current === abortController) {
+        abortController.abort();
+        abortControllerRef.current = null;
+        setIsGeneratingAudit(false);
+      }
+    };
   }, [
     selectedHotspot,
     isGeneratingAudit,
@@ -185,8 +270,8 @@ export function SafetyAuditSidebar() {
     setIsGeneratingAudit,
   ]);
 
-  const isOpen = selectedHotspot !== null;
   const showContent = safetyAudit && !isGeneratingAudit && !error;
+  const showEmptyState = !selectedHotspot && !isGeneratingAudit && !error;
 
   const handleRetry = () => {
     setError(null);
@@ -274,23 +359,26 @@ export function SafetyAuditSidebar() {
             <div>
               <h2 className="text-lg font-semibold text-white">Safety Audit</h2>
               <p className="text-xs text-zinc-400">
-                {selectedHotspot?.intersection || selectedHotspot?.address}
+                {selectedHotspot?.intersection ||
+                  selectedHotspot?.address ||
+                  "Select an intersection"}
               </p>
             </div>
-            <button
-              onClick={() => {
-                selectHotspot(null);
-                setSafetyAudit(null);
-                setError(null);
-              }}
-              className="rounded-lg p-2 hover:bg-zinc-800 transition-colors"
-            >
-              <X className="h-5 w-5 text-zinc-400" />
-            </button>
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="rounded-lg p-2 hover:bg-zinc-800 transition-colors flex items-center"
+                title="Close"
+              >
+                <ChevronLeft className="h-5 w-5 text-zinc-400" />
+                <ChevronLeft className="h-5 w-5 text-zinc-400 -ml-2" />
+              </button>
+            )}
           </div>
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-4 space-y-6">
+            {showEmptyState && <EmptyState />}
             {isGeneratingAudit && !error && <LoadingState />}
             {error && !isGeneratingAudit && (
               <ErrorState onRetry={handleRetry} />
