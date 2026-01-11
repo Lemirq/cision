@@ -60,6 +60,10 @@ Guidelines for image generation:
 - If a generation doesn't work as expected, try again with a different approach or more specific details.
 - Always explain what improvements you're making and why they enhance safety.
 
+IMPORTANT: When the generateImage tool completes successfully, DO NOT include the phrase "Image generated successfully" in your response. The system will display that message separately. Instead, provide a follow-up message describing what was generated and how it addresses the user's request or the safety issues identified. This follow-up should be a separate message from your initial explanation of what you're going to do.
+
+FORMATTING: Do NOT use markdown formatting in your responses. Avoid using asterisks (**), bold text, or any markdown syntax. Write in plain text only. Use simple bullet points with dashes (-) if needed, but do not use markdown formatting like **bold** or *italic*.
+
 Be conversational, helpful, and explain what improvements you're making when generating images.`;
 
     // Add comprehensive safety audit context if available

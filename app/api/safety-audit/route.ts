@@ -177,7 +177,9 @@ Provide a comprehensive safety audit with:
 - Actionable improvement suggestions with priority, cost estimates, and expected impact (each description must be exactly 1 sentence)
 - List of missing infrastructure elements
 
-Be SPECIFIC. Reference ACTUAL visual elements in the image. All descriptions for safety flaws and improvement suggestions must be exactly 1 sentence each.`;
+Be SPECIFIC. Reference ACTUAL visual elements in the image. All descriptions for safety flaws and improvement suggestions must be exactly 1 sentence each.
+
+FORMATTING: Do NOT use markdown formatting. Avoid using asterisks (**), bold text, or any markdown syntax. Write in plain text only.`;
 
     // Generate the safety audit using structured output
     const result = await generateText({

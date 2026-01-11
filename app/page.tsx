@@ -5,10 +5,12 @@ import { ArrowRight, ChevronDown } from "lucide-react"
 import { ContainerScroll } from "@/components/ui/container-scroll-animation"
 import Image from "next/image"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 export default function HomePage() {
   const [svgContent, setSvgContent] = useState<string>("")
   const [mounted] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
     const loadSVG = async () => {
@@ -140,42 +142,47 @@ export default function HomePage() {
       {/* Scroll Preview Section */}
       <section className="relative z-10 py-24 px-4">
         <div className="flex flex-col overflow-hidden">
-          <ContainerScroll
-            titleComponent={
-              <>
-                <h1 className="text-4xl font-semibold text-white text-center">
-                 AI-Powered <br />
-                  <span className="text-4xl md:text-[6rem] font-bold mt-1 leading-none">
-                  Urban Planning
-                  </span>
-                </h1>
-              </>
-            }
+          <div 
+            onClick={() => router.push("/map")}
+            className="cursor-pointer transition-opacity hover:opacity-90"
           >
-            {/* Replace the src with your actual demo video (e.g., /demo.mp4) */}
-            <video
-              src="/yur.mov"
-              className="mx-auto rounded-xl border border-zinc-800 w-[1400px] h-[720px] bg-zinc-900 object-contain"
-              autoPlay
-              muted
-              playsInline
-              preload="auto"
-              onEnded={(e) => {
-                const v = e.currentTarget
-                // Freeze on the last frame (avoid jumping back to start)
-                try {
-                  v.pause()
-                  // Nudge to the exact end to prevent a black frame on some browsers
-                  if (Number.isFinite(v.duration) && v.duration > 0) {
-                    v.currentTime = v.duration - 0.001
-                  }
-                } catch {}
-              }}
+            <ContainerScroll
+              titleComponent={
+                <>
+                  <h1 className="text-4xl font-semibold text-white text-center">
+                   AI-Powered <br />
+                    <span className="text-4xl md:text-[6rem] font-bold mt-1 leading-none">
+                    Urban Planning
+                    </span>
+                  </h1>
+                </>
+              }
             >
-              {/* Fallback text for unsupported browsers */}
-              Your browser does not support the video tag.
-            </video>
-          </ContainerScroll>
+              {/* Replace the src with your actual demo video (e.g., /demo.mp4) */}
+              <video
+                src="/yur.mov"
+                className="mx-auto rounded-xl border border-zinc-800 w-[1400px] h-[720px] bg-zinc-900 object-contain"
+                autoPlay
+                muted
+                playsInline
+                preload="auto"
+                onEnded={(e) => {
+                  const v = e.currentTarget
+                  // Freeze on the last frame (avoid jumping back to start)
+                  try {
+                    v.pause()
+                    // Nudge to the exact end to prevent a black frame on some browsers
+                    if (Number.isFinite(v.duration) && v.duration > 0) {
+                      v.currentTime = v.duration - 0.001
+                    }
+                  } catch {}
+                }}
+              >
+                {/* Fallback text for unsupported browsers */}
+                Your browser does not support the video tag.
+              </video>
+            </ContainerScroll>
+          </div>
         </div>
       </section>
     </div>

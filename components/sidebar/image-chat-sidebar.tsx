@@ -289,103 +289,147 @@ export function ImageChatSidebar({
           </motion.div>
         )}
         <AnimatePresence initial={false}>
-          {messages.map((message) => (
-            <motion.div
-              key={message.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className={cn(
-                "flex gap-3",
-                message.role === "user" ? "flex-row-reverse" : "flex-row"
-              )}
-            >
-              <div
-                className={cn(
-                  "flex-1 max-w-[80%]",
-                  message.role === "user" ? "items-end" : "items-start"
+          {messages.map((message) => {
+            // Separate parts by type
+            const textParts = message.parts?.filter((part) => part.type === "text") || [];
+            const toolParts = message.parts?.filter((part) => part.type === "tool-generateImage") || [];
+            
+            // Find completed tool calls (output-available) to display separately
+            const completedToolParts = toolParts.filter(
+              (part) => part.state === "output-available"
+            );
+            // Find in-progress tool calls to display in bubble
+            const inProgressToolParts = toolParts.filter(
+              (part) => part.state !== "output-available" && part.state !== "output-error"
+            );
+            
+            return (
+              <div key={message.id}>
+                {/* Render completed tool output as plain text (not in bubble) */}
+                {completedToolParts.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="flex gap-3 flex-row mb-2"
+                  >
+                    <div className="flex-1 max-w-[80%] items-start">
+                      {completedToolParts.map((part, toolIndex) => {
+                        if (part.type === "tool-generateImage" && part.state === "output-available") {
+                          const output = part.output as {
+                            success: boolean;
+                            message?: string;
+                            error?: string;
+                          };
+                          if (output.success) {
+                            return (
+                              <p
+                                key={toolIndex}
+                                className="text-sm text-zinc-400 italic"
+                              >
+                                {output.message || "Image generated successfully"}
+                              </p>
+                            );
+                          } else {
+                            return (
+                              <p
+                                key={toolIndex}
+                                className="text-sm text-red-400"
+                              >
+                                Error: {output.error || "Failed to generate image"}
+                              </p>
+                            );
+                          }
+                        }
+                        return null;
+                      })}
+                    </div>
+                  </motion.div>
                 )}
-              >
-                <div
-                  className={cn(
-                    "rounded-lg px-3 py-2 text-sm",
-                    message.role === "user"
-                      ? "bg-primary/20 text-white"
-                      : "bg-zinc-800 text-zinc-200"
-                  )}
-                >
-                  {message.parts?.length ? (
-                    message.parts.map((part, index) => {
-                    switch (part.type) {
-                      case "text":
-                        return (
+                
+                {/* Render the main message (text parts and in-progress tool parts) */}
+                {(textParts.length > 0 || inProgressToolParts.length > 0 || (!completedToolParts.length && !textParts.length && !inProgressToolParts.length)) && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className={cn(
+                      "flex gap-3",
+                      message.role === "user" ? "flex-row-reverse" : "flex-row"
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "flex-1 max-w-[80%]",
+                        message.role === "user" ? "items-end" : "items-start"
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          "rounded-lg px-3 py-2 text-sm",
+                          message.role === "user"
+                            ? "bg-primary/20 text-white"
+                            : "bg-zinc-800 text-zinc-200"
+                        )}
+                      >
+                        {textParts.length > 0 && textParts.map((part, index) => (
                           <p
                             key={index}
                             className="whitespace-pre-wrap break-words"
                           >
                             {part.text}
                           </p>
-                        );
-                      case "tool-generateImage": {
-                        const callId = part.toolCallId;
-                        switch (part.state) {
-                          case "input-streaming":
-                            return (
-                              <div key={callId} className="text-zinc-400">
-                                Preparing to generate image...
-                              </div>
-                            );
-                          case "input-available": {
-                            const input = part.input as { prompt: string };
-                            return (
-                              <div key={callId} className="text-zinc-400">
-                                Generating image: {input.prompt}
-                              </div>
-                            );
+                        ))}
+                        {inProgressToolParts.length > 0 && inProgressToolParts.map((part, index) => {
+                          if (part.type === "tool-generateImage") {
+                            const callId = part.toolCallId || `tool-${index}`;
+                            switch (part.state) {
+                              case "input-streaming":
+                                return (
+                                  <div key={callId} className="text-zinc-400">
+                                    Preparing to generate image...
+                                  </div>
+                                );
+                              case "input-available": {
+                                const input = part.input as { prompt: string };
+                                return (
+                                  <div key={callId} className="text-zinc-400">
+                                    Generating image: {input.prompt}
+                                  </div>
+                                );
+                              }
+                              case "output-error":
+                                return (
+                                  <div key={callId} className="text-red-400">
+                                    Error: {part.errorText}
+                                  </div>
+                                );
+                              default:
+                                return null;
+                            }
                           }
-                          case "output-available": {
-                            const output = part.output as {
-                              success: boolean;
-                              message?: string;
-                              error?: string;
-                            };
-                            return (
-                              <div key={callId} className="text-zinc-200">
-                                {output.success
-                                  ? output.message ||
-                                    "Image generated successfully! The new image has replaced the street view."
-                                  : `Error: ${output.error || "Failed to generate image"}`}
-                              </div>
-                            );
-                          }
-                          case "output-error":
-                            return (
-                              <div key={callId} className="text-red-400">
-                                Error: {part.errorText}
-                              </div>
-                            );
-                        }
-                        break;
-                      }
-                    }
-                    })
-                  ) : (
-                    <p className="whitespace-pre-wrap break-words">
-                      {message.role === "assistant"
-                        ? "Hello! I can help you redefine this intersection. Describe how you'd like to improve it, and I'll generate a new image showing your vision."
-                        : ""}
-                    </p>
-                  )}
-                </div>
-                <span className="text-xs text-zinc-500 mt-1 block">
-                  {new Date().toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </span>
+                          return null;
+                        })}
+                        {textParts.length === 0 && inProgressToolParts.length === 0 && (
+                          <p className="whitespace-pre-wrap break-words">
+                            {message.role === "assistant"
+                              ? "Hello! I can help you redefine this intersection. Describe how you'd like to improve it, and I'll generate a new image showing your vision."
+                              : ""}
+                          </p>
+                        )}
+                      </div>
+                      <span className="text-xs text-zinc-500 mt-1 block">
+                        {new Date().toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+                  </motion.div>
+                )}
               </div>
-            </motion.div>
-          ))}
+            );
+          })}
         </AnimatePresence>
 
         {isLoading && (
