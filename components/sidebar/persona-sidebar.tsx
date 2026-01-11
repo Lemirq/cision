@@ -43,7 +43,7 @@ const PERSONAS: Persona[] = [
     name: "Harsh Mehta",
     role: "DoorDash Courier & Collision Survivor",
     description:
-      "International student hit by a car while delivering. Shares the human cost of unsafe roads.",
+      "Hear directly from a victim of a collision",
     icon: <User className="h-5 w-5 text-white" />,
     color: "green",
   },
@@ -52,7 +52,7 @@ const PERSONAS: Persona[] = [
     name: "Olivia Chow",
     role: "Mayor of Toronto",
     description:
-      "Passionate advocate for road safety. Brings the city's perspective on Vision Zero and policy change.",
+      "Talk to the Mayor about the city's safety",
     icon: <Building2 className="h-5 w-5 text-white" />,
     color: "blue",
   },
@@ -61,7 +61,7 @@ const PERSONAS: Persona[] = [
     name: "Marcus Chen",
     role: "Traffic Engineer, P.Eng.",
     description:
-      "Technical expert who analyzes intersection design flaws and proposes engineering solutions.",
+      "Learn from a technical expert in the field",
     icon: <HardHat className="h-5 w-5 text-white" />,
     color: "amber",
   },
