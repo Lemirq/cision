@@ -85,22 +85,6 @@ export default function HomePage() {
           <span className="text-white font-semibold text-lg">Cision</span>
         </Link>
 
-        {/* Nav Links */}
-        <div className="hidden md:flex items-center gap-8">
-          <a href="#" className="text-white/90 hover:text-white transition-colors text-sm">
-            Home
-          </a>
-          <a href="#" className="text-white/70 hover:text-white transition-colors text-sm">
-            About
-          </a>
-          <a href="#" className="text-white/70 hover:text-white transition-colors text-sm">
-            Pricing
-          </a>
-          <a href="#" className="text-white/70 hover:text-white transition-colors text-sm">
-            Discovery
-          </a>
-        </div>
-
         {/* App Link */}
         <a href="/map" className="flex items-center gap-1 text-white/90 hover:text-white transition-colors text-sm">
           Open App

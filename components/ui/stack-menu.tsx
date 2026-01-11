@@ -89,7 +89,7 @@ export function MenuItem({
 }
 
 export function MenuContainer({ children }: { children: React.ReactNode }) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   const childrenArray = React.Children.toArray(children);
   const itemSpacing = 80; // px distance between items when expanded
 
