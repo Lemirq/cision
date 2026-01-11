@@ -2,13 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import { createHash } from "crypto";
 import clientPromise from "@/lib/mongodb";
-import { clusterCollisions } from "@/lib/clustering";
-import type { CollisionPoint } from "@/types/collision";
 
 // Next.js 16: Route segment config
 // For API routes with query params, we use 'force-dynamic' but cache the data fetch with unstable_cache
 // The unstable_cache handles revalidation (7 days), and we add HTTP cache headers for client/CDN caching
-export const dynamic = 'force-dynamic'; // Required for handling query params dynamically
+export const dynamic = "force-dynamic"; // Required for handling query params dynamically
 
 interface CollisionDocument {
   OBJECTID: string;
@@ -55,12 +53,19 @@ async function fetchCollisionsData(limit: number, skip: number) {
     .filter((collision) => {
       const lat = parseFloat(collision.LAT_WGS84);
       const lng = parseFloat(collision.LONG_WGS84);
-      return !isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+      return (
+        !isNaN(lat) &&
+        !isNaN(lng) &&
+        lat >= -90 &&
+        lat <= 90 &&
+        lng >= -180 &&
+        lng <= 180
+      );
     })
     .map((collision) => {
       const lat = parseFloat(collision.LAT_WGS84);
       const lng = parseFloat(collision.LONG_WGS84);
-      
+
       // Calculate a weight based on severity
       let weight = 1;
       if (collision.FATALITIES === "1" || collision.FATALITIES === "2") {
@@ -120,7 +125,7 @@ const getCachedCollisions = unstable_cache(
   {
     revalidate: 604800, // 7 days - data rarely changes
     tags: ["collisions"], // For manual cache invalidation with revalidateTag('collisions')
-  }
+  },
 );
 
 export async function GET(request: NextRequest) {
@@ -128,50 +133,52 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const limit = parseInt(searchParams.get("limit") || "147888"); // Default to all collisions
     const skip = parseInt(searchParams.get("skip") || "0");
-    
-    // Get cached data - unstable_cache automatically creates separate cache entries 
+
+    // Get cached data - unstable_cache automatically creates separate cache entries
     // based on function arguments (limit, skip), so different queries are cached separately
     const geojson = await getCachedCollisions(limit, skip);
 
     // Generate ETag for client-side caching validation
     const dataString = JSON.stringify(geojson);
     const etag = createHash("md5").update(dataString).digest("hex");
-    
+
     // Check if client has cached version
     const ifNoneMatch = request.headers.get("if-none-match");
     if (ifNoneMatch === `"${etag}"`) {
       return new NextResponse(null, {
         status: 304, // Not Modified
         headers: {
-          "ETag": `"${etag}"`,
-          "Cache-Control": "public, max-age=31536000, immutable, stale-while-revalidate=2592000", // 1 year max-age, 30 days stale
+          ETag: `"${etag}"`,
+          "Cache-Control":
+            "public, max-age=31536000, immutable, stale-while-revalidate=2592000", // 1 year max-age, 30 days stale
         },
       });
     }
 
     // Heavy caching headers:
     // - max-age=604800 (7 days) - browser/CDN cache duration
-    // - s-maxage=604800 (7 days) - CDN cache duration  
+    // - s-maxage=604800 (7 days) - CDN cache duration
     // - stale-while-revalidate=2592000 (30 days) - serve stale content while revalidating
     // - immutable - indicates content won't change, allows aggressive caching
     return NextResponse.json(geojson, {
       headers: {
-        "Cache-Control": "public, max-age=604800, s-maxage=604800, stale-while-revalidate=2592000, immutable",
-        "ETag": `"${etag}"`,
+        "Cache-Control":
+          "public, max-age=604800, s-maxage=604800, stale-while-revalidate=2592000, immutable",
+        ETag: `"${etag}"`,
         "Content-Type": "application/json",
-        "Vary": "Accept-Encoding",
+        Vary: "Accept-Encoding",
       },
     });
   } catch (error) {
     console.error("Error fetching collisions:", error);
     return NextResponse.json(
       { error: "Failed to fetch collisions" },
-      { 
+      {
         status: 500,
         headers: {
           "Cache-Control": "no-store", // Don't cache errors
         },
-      }
+      },
     );
   }
 }
