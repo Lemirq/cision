@@ -27,6 +27,7 @@ import {
   getClusterData,
   updateSafetyAudit,
   initializeClusterData,
+  getImageAudit,
 } from "@/lib/cluster-storage";
 
 function ScoreBadge({ score, label }: { score: number; label: string }) {
@@ -157,12 +158,34 @@ export function SafetyAuditSidebar({
     setIsGeneratingAudit,
   } = useMapStore();
   const [error, setError] = useState<string | null>(null);
+  const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
   // Ref to store the AbortController for the current request
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  // Watch for current image changes in cluster data
+  useEffect(() => {
+    if (!selectedHotspot) {
+      setCurrentImageUrl(null);
+      return;
+    }
+
+    const checkImage = () => {
+      const storedData = getClusterData(selectedHotspot.id);
+      const imageUrl = storedData?.images.current || null;
+      setCurrentImageUrl(imageUrl);
+    };
+
+    // Check immediately
+    checkImage();
+
+    // Poll for changes every 500ms
+    const interval = setInterval(checkImage, 500);
+    return () => clearInterval(interval);
+  }, [selectedHotspot]);
+
   // Load existing audit from state store and auto-generate if needed
   useEffect(() => {
-    // Cancel any ongoing request when selectedHotspot changes
+    // Cancel any ongoing request when selectedHotspot or currentImageUrl changes
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
@@ -179,11 +202,22 @@ export function SafetyAuditSidebar({
     // Initialize cluster data in store
     initializeClusterData(selectedHotspot.id, selectedHotspot);
 
-    // Try to load existing audit from state store
     const storedData = getClusterData(selectedHotspot.id);
-    if (storedData?.safetyAudit) {
-      setSafetyAudit(storedData.safetyAudit);
-      return; // Don't generate if we have stored data
+    
+    // Try to load existing audit for the current image
+    const imageAudit = currentImageUrl ? getImageAudit(selectedHotspot.id, currentImageUrl) : null;
+    
+    if (imageAudit) {
+      setSafetyAudit(imageAudit);
+      return; // Don't generate if we have stored audit for this image
+    }
+
+    // If no current image or it's the original, try to load the main audit
+    if (!currentImageUrl || currentImageUrl === storedData?.images.original) {
+      if (storedData?.safetyAudit) {
+        setSafetyAudit(storedData.safetyAudit);
+        return; // Don't generate if we have stored data
+      }
     }
 
     // Create a new AbortController for this request
@@ -195,23 +229,33 @@ export function SafetyAuditSidebar({
         setError(null);
         setIsGeneratingAudit(true);
 
-        // Call safety audit API (it will fetch and stitch 4 directions internally)
+        // If we have a current image URL, use it for single image audit
+        // Otherwise, generate panoramic audit from street view
+        const requestBody: any = {
+          clusterData: {
+            address: selectedHotspot.address,
+            total_count: selectedHotspot.total_count,
+            fatal_count: selectedHotspot.fatal_count,
+            cyclist_count: selectedHotspot.cyclist_count,
+            pedestrian_count: selectedHotspot.pedestrian_count,
+          },
+        };
+
+        if (currentImageUrl && currentImageUrl !== storedData?.images.original) {
+          // Single image audit
+          requestBody.imageUrl = currentImageUrl;
+        } else {
+          // Panoramic audit from street view
+          requestBody.lat = selectedHotspot.centroid.lat;
+          requestBody.lng = selectedHotspot.centroid.lng;
+        }
+
         const response = await fetch("/api/safety-audit", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            lat: selectedHotspot.centroid.lat,
-            lng: selectedHotspot.centroid.lng,
-            clusterData: {
-              address: selectedHotspot.address,
-              total_count: selectedHotspot.total_count,
-              fatal_count: selectedHotspot.fatal_count,
-              cyclist_count: selectedHotspot.cyclist_count,
-              pedestrian_count: selectedHotspot.pedestrian_count,
-            },
-          }),
+          body: JSON.stringify(requestBody),
           signal: abortController.signal,
         });
 
@@ -225,8 +269,12 @@ export function SafetyAuditSidebar({
         // Only update state if the request wasn't aborted
         if (!abortController.signal.aborted) {
           setSafetyAudit(auditData);
-          // Save audit to local storage
-          updateSafetyAudit(selectedHotspot.id, auditData, selectedHotspot);
+          // Save audit to local storage (with imageUrl if it's a single image audit)
+          if (currentImageUrl && currentImageUrl !== storedData?.images.original) {
+            updateSafetyAudit(selectedHotspot.id, auditData, selectedHotspot, currentImageUrl);
+          } else {
+            updateSafetyAudit(selectedHotspot.id, auditData, selectedHotspot);
+          }
         }
       } catch (err) {
         // Don't set error if the request was aborted (user clicked another cluster)
@@ -263,6 +311,7 @@ export function SafetyAuditSidebar({
     };
   }, [
     selectedHotspot,
+    currentImageUrl,
     isGeneratingAudit,
     safetyAudit,
     setSafetyAudit,
@@ -279,6 +328,11 @@ export function SafetyAuditSidebar({
     // Trigger regeneration by clearing state
   };
 
+  // Get original audit for comparison
+  const originalAudit = selectedHotspot
+    ? getClusterData(selectedHotspot.id)?.safetyAudit || null
+    : null;
+
   // Calculate safety score (average of all metrics, floored)
   const safetyScore = safetyAudit?.metrics
     ? Math.floor(
@@ -292,47 +346,67 @@ export function SafetyAuditSidebar({
       )
     : 0;
 
+  // Calculate previous safety score for delta
+  const previousSafetyScore = originalAudit?.metrics
+    ? Math.floor(
+        (originalAudit.metrics.signage +
+          originalAudit.metrics.lighting +
+          originalAudit.metrics.crosswalkVisibility +
+          originalAudit.metrics.bikeInfrastructure +
+          originalAudit.metrics.pedestrianInfrastructure +
+          originalAudit.metrics.trafficCalming) /
+          6
+      )
+    : undefined;
+
   const metrics = safetyAudit?.metrics
     ? [
         {
           label: "Walkability",
           value: safetyAudit.walkabilityScore,
+          previousValue: originalAudit?.walkabilityScore,
           icon: User,
           color: "blue" as const,
         },
         {
           label: "Signage",
           value: safetyAudit.metrics.signage,
+          previousValue: originalAudit?.metrics.signage,
           icon: Signpost,
           color: "red" as const,
         },
         {
           label: "Lighting",
           value: safetyAudit.metrics.lighting,
+          previousValue: originalAudit?.metrics.lighting,
           icon: Lightbulb,
           color: "amber" as const,
         },
         {
           label: "Crosswalks",
           value: safetyAudit.metrics.crosswalkVisibility,
+          previousValue: originalAudit?.metrics.crosswalkVisibility,
           icon: Navigation,
           color: "green" as const,
         },
         {
           label: "Bike Infrastructure",
           value: safetyAudit.metrics.bikeInfrastructure,
+          previousValue: originalAudit?.metrics.bikeInfrastructure,
           icon: Bike,
           color: "blue" as const,
         },
         {
           label: "Pedestrian Infrastructure",
           value: safetyAudit.metrics.pedestrianInfrastructure,
+          previousValue: originalAudit?.metrics.pedestrianInfrastructure,
           icon: User,
           color: "amber" as const,
         },
         {
           label: "Traffic Calming",
           value: safetyAudit.metrics.trafficCalming,
+          previousValue: originalAudit?.metrics.trafficCalming,
           icon: Gauge,
           color: "green" as const,
         },
@@ -385,7 +459,23 @@ export function SafetyAuditSidebar({
             {showContent && safetyAudit && (
               <>
                 {/* Safety Score */}
-                <ScoreBadge score={safetyScore} label="Safety Score" />
+                <div className="relative">
+                  <ScoreBadge score={safetyScore} label="Safety Score" />
+                  {previousSafetyScore !== undefined && previousSafetyScore !== safetyScore && (
+                    <div className="absolute -top-2 -right-2 flex items-center gap-1 px-2 py-1 rounded-full bg-zinc-900 border border-zinc-700">
+                      <span
+                        className={`text-xs font-semibold ${
+                          safetyScore > previousSafetyScore
+                            ? "text-green-400"
+                            : "text-red-400"
+                        }`}
+                      >
+                        {safetyScore > previousSafetyScore ? "+" : ""}
+                        {safetyScore - previousSafetyScore}
+                      </span>
+                    </div>
+                  )}
+                </div>
 
                 {/* Metrics */}
                 <div className="space-y-4">
@@ -398,6 +488,7 @@ export function SafetyAuditSidebar({
                         key={metric.label}
                         label={metric.label}
                         value={metric.value}
+                        previousValue={metric.previousValue}
                         icon={metric.icon}
                         color={metric.color}
                       />

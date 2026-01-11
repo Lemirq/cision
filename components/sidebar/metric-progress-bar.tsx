@@ -8,6 +8,7 @@ interface MetricProgressBarProps {
   value: number;
   icon: LucideIcon;
   color?: "green" | "amber" | "red" | "blue";
+  previousValue?: number; // Optional: previous value to show delta
 }
 
 export function MetricProgressBar({
@@ -15,6 +16,7 @@ export function MetricProgressBar({
   value,
   icon: Icon,
   color = "blue",
+  previousValue,
 }: MetricProgressBarProps) {
   const colorClasses = {
     green: {
@@ -41,6 +43,15 @@ export function MetricProgressBar({
 
   const colors = colorClasses[color];
 
+  const delta = previousValue !== undefined ? value - previousValue : null;
+  const deltaColor = delta !== null
+    ? delta > 0
+      ? "text-green-400"
+      : delta < 0
+        ? "text-red-400"
+        : "text-zinc-400"
+    : "";
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
@@ -48,9 +59,16 @@ export function MetricProgressBar({
           <Icon className={`h-4 w-4 ${colors.text}`} />
           <span className="text-sm text-zinc-300 font-medium">{label}</span>
         </div>
-        <span className={`text-sm font-semibold ${colors.text}`}>
-          {value}
-        </span>
+        <div className="flex items-center gap-2">
+          {delta !== null && delta !== 0 && (
+            <span className={`text-xs font-medium ${deltaColor}`}>
+              {delta > 0 ? "+" : ""}{delta}
+            </span>
+          )}
+          <span className={`text-sm font-semibold ${colors.text}`}>
+            {value}
+          </span>
+        </div>
       </div>
       <div className="relative h-2 bg-zinc-800 rounded-full overflow-hidden">
         <motion.div

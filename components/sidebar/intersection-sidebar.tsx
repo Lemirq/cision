@@ -9,6 +9,7 @@ import { PhotoProvider } from "react-photo-view";
 import { ImageChatSidebar } from "./image-chat-sidebar";
 import { ImageCarousel } from "@/components/ui/image-carousel";
 import type { ClusteredHotspot } from "@/types/collision";
+import { updateCurrentImage, getClusterData } from "@/lib/cluster-storage";
 
 interface GeneratedImage {
   id: string;
@@ -265,8 +266,22 @@ export function IntersectionSidebar() {
   const handleSelectImage = (imageId: string) => {
     if (imageId === "original") {
       setCurrentImageId(null);
+      // Update cluster data to set current image to null (original)
+      if (displayHotspot) {
+        const clusterData = getClusterData(displayHotspot.id);
+        if (clusterData) {
+          updateCurrentImage(displayHotspot.id, null);
+        }
+      }
     } else {
       setCurrentImageId(imageId);
+      // Update cluster data to set current image to the selected image URL
+      if (displayHotspot) {
+        const image = generatedImages.find((img) => img.id === imageId);
+        if (image) {
+          updateCurrentImage(displayHotspot.id, image.url);
+        }
+      }
     }
   };
 

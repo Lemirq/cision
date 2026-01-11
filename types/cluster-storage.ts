@@ -13,7 +13,8 @@ export interface ImageVersion {
 export interface StoredClusterData {
   clusterId: string;
   clusterInfo: ClusteredHotspot; // Original cluster data
-  safetyAudit?: SafetyAuditResult; // Most recent audit (includes infrastructureGaps)
+  safetyAudit?: SafetyAuditResult; // Original/panoramic audit (includes infrastructureGaps)
+  imageAudits?: Record<string, SafetyAuditResult>; // Audits per image version (keyed by imageUrl)
   images: {
     original: string; // Original stitched image URL
     history: ImageVersion[]; // Complete version history

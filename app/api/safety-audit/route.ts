@@ -45,9 +45,10 @@ export async function POST(req: NextRequest) {
       lat,
       lng,
       clusterData,
+      imageUrl, // Optional: single image URL (base64 data URL or regular URL)
     }: {
-      lat: number;
-      lng: number;
+      lat?: number;
+      lng?: number;
       clusterData: {
         address: string;
         total_count: number;
@@ -55,14 +56,8 @@ export async function POST(req: NextRequest) {
         cyclist_count: number;
         pedestrian_count: number;
       };
+      imageUrl?: string; // For single image audits
     } = body;
-
-    if (!lat || !lng) {
-      return NextResponse.json(
-        { error: "Latitude and longitude are required" },
-        { status: 400 }
-      );
-    }
 
     // Get API key from environment
     const apiKey =
@@ -83,76 +78,121 @@ export async function POST(req: NextRequest) {
       process.env.GOOGLE_GENERATIVE_AI_API_KEY = apiKey;
     }
 
-    // Fetch street view images from all 4 directions (0, 90, 180, 270 degrees)
-    const headings = [0, 90, 180, 270];
-    const origin = req.nextUrl.origin;
-    
-    const imageBuffers = await Promise.all(
-      headings.map(async (heading) => {
-        const imageUrl = `${origin}/api/streetview?lat=${lat}&lng=${lng}&heading=${heading}&size=640x640`;
-        const response = await fetch(imageUrl);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch street view image at heading ${heading}`);
+    let imageUint8Array: Uint8Array;
+    let isSingleImage = false;
+
+    // If imageUrl is provided, use it (single image audit)
+    if (imageUrl) {
+      isSingleImage = true;
+      let imageBuffer: ArrayBuffer;
+
+      if (imageUrl.startsWith("data:")) {
+        // Handle data URL (base64)
+        const base64Match = imageUrl.match(/^data:([^;]+);base64,(.+)$/);
+        if (!base64Match) {
+          return NextResponse.json(
+            { error: "Invalid data URL format" },
+            { status: 400 }
+          );
         }
-        return Buffer.from(await response.arrayBuffer());
+        const base64Data = base64Match[2];
+        imageBuffer = Buffer.from(base64Data, "base64").buffer;
+      } else {
+        // Handle regular URL
+        const imageResponse = await fetch(imageUrl);
+        if (!imageResponse.ok) {
+          return NextResponse.json(
+            { error: "Failed to fetch image" },
+            { status: 400 }
+          );
+        }
+        imageBuffer = await imageResponse.arrayBuffer();
+      }
+
+      imageUint8Array = new Uint8Array(imageBuffer);
+    } else {
+      // Original behavior: fetch 360 panorama from street view
+      if (!lat || !lng) {
+        return NextResponse.json(
+          { error: "Latitude and longitude are required when imageUrl is not provided" },
+          { status: 400 }
+        );
+      }
+
+      // Fetch street view images from all 4 directions (0, 90, 180, 270 degrees)
+      const headings = [0, 90, 180, 270];
+      const origin = req.nextUrl.origin;
+      
+      const imageBuffers = await Promise.all(
+        headings.map(async (heading) => {
+          const imageUrl = `${origin}/api/streetview?lat=${lat}&lng=${lng}&heading=${heading}&size=640x640`;
+          const response = await fetch(imageUrl);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch street view image at heading ${heading}`);
+          }
+          return Buffer.from(await response.arrayBuffer());
+        })
+      );
+
+      // Stitch images together: arrange them side by side in a single row
+      // Order: N (0°), E (90°), S (180°), W (270°)
+      // Layout: [N] [E] [S] [W] (all in one row)
+      const imageWidth = 640;
+      const imageHeight = 640;
+      const compositeWidth = imageWidth * 4; // 4 images side by side
+      const compositeHeight = imageHeight;
+
+      // Create composite image using sharp
+      // imageBuffers[0] = 0° (N), [1] = 90° (E), [2] = 180° (S), [3] = 270° (W)
+      const compositeImage = await sharp({
+        create: {
+          width: compositeWidth,
+          height: compositeHeight,
+          channels: 3,
+          background: { r: 0, g: 0, b: 0 },
+        },
       })
-    );
+        .composite([
+          // First: 0° (north)
+          {
+            input: imageBuffers[0],
+            left: 0,
+            top: 0,
+          },
+          // Second: 90° (east)
+          {
+            input: imageBuffers[1],
+            left: imageWidth,
+            top: 0,
+          },
+          // Third: 180° (south)
+          {
+            input: imageBuffers[2],
+            left: imageWidth * 2,
+            top: 0,
+          },
+          // Fourth: 270° (west)
+          {
+            input: imageBuffers[3],
+            left: imageWidth * 3,
+            top: 0,
+          },
+        ])
+        .jpeg({ quality: 90 })
+        .toBuffer();
 
-
-    // Stitch images together: arrange them side by side in a single row
-    // Order: N (0°), E (90°), S (180°), W (270°)
-    // Layout: [N] [E] [S] [W] (all in one row)
-    const imageWidth = 640;
-    const imageHeight = 640;
-    const compositeWidth = imageWidth * 4; // 4 images side by side
-    const compositeHeight = imageHeight;
-
-    // Create composite image using sharp
-    // imageBuffers[0] = 0° (N), [1] = 90° (E), [2] = 180° (S), [3] = 270° (W)
-    const compositeImage = await sharp({
-      create: {
-        width: compositeWidth,
-        height: compositeHeight,
-        channels: 3,
-        background: { r: 0, g: 0, b: 0 },
-      },
-    })
-      .composite([
-        // First: 0° (north)
-        {
-          input: imageBuffers[0],
-          left: 0,
-          top: 0,
-        },
-        // Second: 90° (east)
-        {
-          input: imageBuffers[1],
-          left: imageWidth,
-          top: 0,
-        },
-        // Third: 180° (south)
-        {
-          input: imageBuffers[2],
-          left: imageWidth * 2,
-          top: 0,
-        },
-        // Fourth: 270° (west)
-        {
-          input: imageBuffers[3],
-          left: imageWidth * 3,
-          top: 0,
-        },
-      ])
-      .jpeg({ quality: 90 })
-      .toBuffer();
-
-    // Convert to Uint8Array for Gemini
-    const imageUint8Array = new Uint8Array(compositeImage);
+      // Convert to Uint8Array for Gemini
+      imageUint8Array = new Uint8Array(compositeImage);
+    }
 
     // Build the prompt
+    const imageContext = isSingleImage
+      ? "single intersection image"
+      : "PANORAMIC intersection image. The image is a panoramic composite showing views from all four cardinal directions (North, East, South, West) arranged side-by-side in a single row. This gives you a 360-degree view of the intersection.";
+    
     const prompt = `You are an expert urban safety analyst with 20 years of experience in traffic engineering. You specialize in Vision Zero initiatives.
 
-Analyze this PANORAMIC intersection image for pedestrian and cyclist safety hazards. The image is a panoramic composite showing views from all four cardinal directions (North, East, South, West) arranged side-by-side in a single row. This gives you a 360-degree view of the intersection.
+Analyze this ${imageContext} for pedestrian and cyclist safety hazards.
 
 CONTEXT:
 - Location: ${clusterData.address}
@@ -170,12 +210,20 @@ ANALYSIS FRAMEWORK:
 7. LIGHTING: Is there adequate lighting for nighttime safety?
 8. TRAFFIC CALMING: Are there measures to slow traffic?
 
+SCORING GUIDELINES - BE GENEROUS WITH IMPROVEMENTS:
+- When you see ANY safety improvements, infrastructure enhancements, or positive changes in the image, award HIGHER scores to reflect these improvements
+- If you observe new safety features (crosswalks, bike lanes, traffic calming, better signage, improved lighting, etc.), score them GENEROUSLY - even partial or visible improvements should result in significant score increases
+- Recognize and reward ALL visible safety enhancements with substantial positive score adjustments
+- For any category where improvements are visible, increase the score by a meaningful amount (aim for 10-30 point increases for visible improvements)
+- Be optimistic in your scoring - if safety features are present or improved, reflect that with higher numbers
+- The goal is to show meaningful positive impact when changes are made
+
 Provide a comprehensive safety audit with:
-- Overall walkability score (0-100) based on all factors
-- Individual metric scores for: signage, lighting, crosswalk visibility, bike infrastructure, pedestrian infrastructure, and traffic calming
-- 3-5 critical safety flaws with specific descriptions (each description must be exactly 1 sentence)
-- Actionable improvement suggestions with priority, cost estimates, and expected impact (each description must be exactly 1 sentence)
-- List of missing infrastructure elements
+- Overall walkability score (0-100) based on all factors - be generous when improvements are visible
+- Individual metric scores for: signage, lighting, crosswalk visibility, bike infrastructure, pedestrian infrastructure, and traffic calming - award higher scores for any visible improvements
+- 3-5 critical safety flaws with specific descriptions (each description must be exactly 1 sentence) - focus on remaining issues, not improvements
+- Actionable improvement suggestions with priority, cost estimates, and expected impact (each description must be exactly 1 sentence) - suggest further enhancements
+- List of missing infrastructure elements - only list what's still missing, not what's been added
 
 Be SPECIFIC. Reference ACTUAL visual elements in the image. All descriptions for safety flaws and improvement suggestions must be exactly 1 sentence each.
 
@@ -205,11 +253,21 @@ FORMATTING: Do NOT use markdown formatting. Avoid using asterisks (**), bold tex
       }),
     });
 
-    // Convert stitched composite image to base64 data URL for UI display
-    const stitchedImageBase64 = compositeImage.toString("base64");
-    const stitchedImageUrl = `data:image/jpeg;base64,${stitchedImageBase64}`;
+    // Convert image to base64 data URL for UI display
+    let stitchedImageUrl: string | undefined;
+    if (isSingleImage) {
+      // For single images, convert the input image to base64
+      const imageBuffer = Buffer.from(imageUint8Array);
+      const imageBase64 = imageBuffer.toString("base64");
+      stitchedImageUrl = `data:image/jpeg;base64,${imageBase64}`;
+    } else {
+      // For panoramic images, use the composite
+      const compositeImage = Buffer.from(imageUint8Array);
+      const stitchedImageBase64 = compositeImage.toString("base64");
+      stitchedImageUrl = `data:image/jpeg;base64,${stitchedImageBase64}`;
+    }
 
-    // Combine the audit result with the stitched image URL
+    // Combine the audit result with the image URL
     const auditResult = result.output as SafetyAuditResult;
     const response: SafetyAuditResult = {
       ...auditResult,

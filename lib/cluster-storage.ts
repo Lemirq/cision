@@ -48,7 +48,8 @@ export function initializeClusterData(
 export function updateSafetyAudit(
   clusterId: string,
   audit: SafetyAuditResult,
-  clusterInfo?: ClusteredHotspot
+  clusterInfo?: ClusteredHotspot,
+  imageUrl?: string // Optional: if provided, store audit for this specific image
 ): void {
   const existing = getClusterData(clusterId);
   const clusterData = clusterInfo
@@ -66,15 +67,39 @@ export function updateSafetyAudit(
         intersection: "",
       });
 
-  // Store audit with full stitchedImageUrl (no size restrictions in state store)
-  clusterData.safetyAudit = audit;
-  
-  // Save original stitched image if it exists
-  if (audit.stitchedImageUrl && !clusterData.images.original) {
-    clusterData.images.original = audit.stitchedImageUrl;
+  // If imageUrl is provided, store audit for that specific image
+  if (imageUrl) {
+    if (!clusterData.imageAudits) {
+      clusterData.imageAudits = {};
+    }
+    clusterData.imageAudits[imageUrl] = audit;
+  } else {
+    // Otherwise, store as the main/original audit
+    clusterData.safetyAudit = audit;
+    
+    // Save original stitched image if it exists
+    if (audit.stitchedImageUrl && !clusterData.images.original) {
+      clusterData.images.original = audit.stitchedImageUrl;
+    }
   }
 
   saveClusterData(clusterId, clusterData);
+}
+
+/**
+ * Get safety audit for a specific image
+ */
+export function getImageAudit(clusterId: string, imageUrl: string | null): SafetyAuditResult | null {
+  const clusterData = getClusterData(clusterId);
+  if (!clusterData) return null;
+  
+  // If no imageUrl or it's the original, return the main audit
+  if (!imageUrl || imageUrl === clusterData.images.original) {
+    return clusterData.safetyAudit || null;
+  }
+  
+  // Otherwise, look up the audit for this specific image
+  return clusterData.imageAudits?.[imageUrl] || null;
 }
 
 /**

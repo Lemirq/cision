@@ -12,7 +12,9 @@ import {
   getInfrastructureGaps,
   saveClusterData,
   addImageVersion,
+  updateSafetyAudit,
 } from "@/lib/cluster-storage";
+import type { SafetyAuditResult } from "@/types/safety-audit";
 
 interface ImageChatSidebarProps {
   imageSrc?: string;
@@ -179,6 +181,39 @@ export function ImageChatSidebar({
                 parentVersionId: parentVersionId,
               });
               // Note: addImageVersion already updates current image
+
+              // Trigger safety audit for the new image
+              // Use setTimeout to ensure the image is saved first
+              setTimeout(async () => {
+                try {
+                  const clusterData = getClusterData(clusterId);
+                  if (!clusterData) return;
+
+                  const response = await fetch("/api/safety-audit", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                      imageUrl: output.image,
+                      clusterData: {
+                        address: clusterData.clusterInfo.address,
+                        total_count: clusterData.clusterInfo.total_count,
+                        fatal_count: clusterData.clusterInfo.fatal_count,
+                        cyclist_count: clusterData.clusterInfo.cyclist_count,
+                        pedestrian_count: clusterData.clusterInfo.pedestrian_count,
+                      },
+                    }),
+                  });
+
+                  if (response.ok) {
+                    const auditData: SafetyAuditResult = await response.json();
+                    updateSafetyAudit(clusterId, auditData, clusterData.clusterInfo, output.image);
+                  }
+                } catch (err) {
+                  console.error("Error generating safety audit for new image:", err);
+                }
+              }, 100);
             }
           }
         }
@@ -311,7 +346,7 @@ export function ImageChatSidebar({
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
-                    className="flex gap-3 flex-row mb-2"
+                    className="flex gap-3 flex-row mb-4"
                   >
                     <div className="flex-1 max-w-[80%] items-start">
                       {completedToolParts.map((part, toolIndex) => {
@@ -347,8 +382,8 @@ export function ImageChatSidebar({
                   </motion.div>
                 )}
                 
-                {/* Render the main message (text parts and in-progress tool parts) */}
-                {(textParts.length > 0 || inProgressToolParts.length > 0 || (!completedToolParts.length && !textParts.length && !inProgressToolParts.length)) && (
+                {/* Render text parts as a separate message bubble (only if there are completed tool parts) */}
+                {completedToolParts.length > 0 && textParts.length > 0 && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -372,7 +407,52 @@ export function ImageChatSidebar({
                             : "bg-zinc-800 text-zinc-200"
                         )}
                       >
-                        {textParts.length > 0 && textParts.map((part, index) => (
+                        {textParts.map((part, index) => (
+                          <p
+                            key={index}
+                            className="whitespace-pre-wrap break-words"
+                          >
+                            {part.text}
+                          </p>
+                        ))}
+                      </div>
+                      <span className="text-xs text-zinc-500 mt-1 block">
+                        {new Date().toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+                  </motion.div>
+                )}
+                
+                {/* Render the main message (text parts when no completed tools, and in-progress tool parts) */}
+                {((!completedToolParts.length && textParts.length > 0) || inProgressToolParts.length > 0 || (!completedToolParts.length && !textParts.length && !inProgressToolParts.length)) && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className={cn(
+                      "flex gap-3",
+                      message.role === "user" ? "flex-row-reverse" : "flex-row"
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "flex-1 max-w-[80%]",
+                        message.role === "user" ? "items-end" : "items-start"
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          "rounded-lg px-3 py-2 text-sm",
+                          message.role === "user"
+                            ? "bg-primary/20 text-white"
+                            : "bg-zinc-800 text-zinc-200"
+                        )}
+                      >
+                        {/* Only render text parts if there are no completed tool parts (they're rendered separately above) */}
+                        {!completedToolParts.length && textParts.length > 0 && textParts.map((part, index) => (
                           <p
                             key={index}
                             className="whitespace-pre-wrap break-words"
