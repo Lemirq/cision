@@ -95,11 +95,19 @@ const getColorClasses = (color: string, type: "bg" | "text" | "bg-light") => {
 };
 
 export function PersonaSidebar() {
-  const [currentView, setCurrentView] = useState<"list" | "conversation">("list");
+  const [currentView, setCurrentView] = useState<"list" | "conversation">(
+    "list"
+  );
   const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
-  const [transcriptMessages, setTranscriptMessages] = useState<TranscriptMessage[]>([]);
-  const [connectionStatus, setConnectionStatus] = useState<"disconnected" | "ringing" | "connecting" | "connected">("disconnected");
-  const [conversationMode, setConversationMode] = useState<"listening" | "speaking" | "idle">("idle");
+  const [transcriptMessages, setTranscriptMessages] = useState<
+    TranscriptMessage[]
+  >([]);
+  const [connectionStatus, setConnectionStatus] = useState<
+    "disconnected" | "ringing" | "connecting" | "connected"
+  >("disconnected");
+  const [conversationMode, setConversationMode] = useState<
+    "listening" | "speaking" | "idle"
+  >("idle");
   const [isPaused, setIsPaused] = useState(false);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
   const ringAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -208,7 +216,8 @@ export function PersonaSidebar() {
         connectionType: "websocket",
         dynamicVariables: selectedHotspot
           ? {
-              intersection_name: selectedHotspot.intersection || selectedHotspot.address,
+              intersection_name:
+                selectedHotspot.intersection || selectedHotspot.address,
               collision_count: selectedHotspot.total_count.toString(),
               fatal_count: selectedHotspot.fatal_count.toString(),
               cyclist_count: selectedHotspot.cyclist_count.toString(),
@@ -260,7 +269,9 @@ export function PersonaSidebar() {
           >
             {/* Header */}
             <div className="border-b border-zinc-800 p-4">
-              <h2 className="text-lg font-semibold text-white mb-1">Voice Agents</h2>
+              <h2 className="text-lg font-semibold text-white mb-1">
+                Voice Agents
+              </h2>
               <p className="text-xs text-zinc-400">
                 Select a stakeholder to talk about intersections
               </p>
@@ -299,7 +310,12 @@ export function PersonaSidebar() {
                         </p>
                         <ChevronRight className="h-4 w-4 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
                       </div>
-                      <p className={cn("text-xs mb-2", getColorClasses(persona.color, "text"))}>
+                      <p
+                        className={cn(
+                          "text-xs mb-2",
+                          getColorClasses(persona.color, "text")
+                        )}
+                      >
                         {persona.role}
                       </p>
                       <p className="text-xs text-zinc-500 line-clamp-2">
@@ -342,7 +358,12 @@ export function PersonaSidebar() {
                   <h2 className="text-lg font-semibold text-white">
                     {selectedPersona.name}
                   </h2>
-                  <p className={cn("text-xs", getColorClasses(selectedPersona.color, "text"))}>
+                  <p
+                    className={cn(
+                      "text-xs",
+                      getColorClasses(selectedPersona.color, "text")
+                    )}
+                  >
                     {selectedPersona.role}
                   </p>
                 </div>
@@ -520,7 +541,9 @@ export function PersonaSidebar() {
                   ) : (
                     <>
                       <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                      <span className="text-xs text-blue-400">Listening...</span>
+                      <span className="text-xs text-blue-400">
+                        Listening...
+                      </span>
                     </>
                   )}
                 </div>
@@ -558,7 +581,9 @@ export function PersonaSidebar() {
 
                   {/* Main Voice Button */}
                   <motion.button
-                    onClick={isCallInProgress ? endConversation : startConversation}
+                    onClick={
+                      isCallInProgress ? endConversation : startConversation
+                    }
                     disabled={isConnecting}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}

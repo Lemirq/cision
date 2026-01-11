@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { ClusteredHotspot } from "@/types/collision";
+import type { ClusteredHotspot, CollisionPoint, PlaceInfo } from "@/types/collision";
 import { MAP_CONFIG } from "@/lib/constants";
 
 interface MapState {
@@ -11,9 +11,13 @@ interface MapState {
     bearing: number;
   };
   selectedHotspot: ClusteredHotspot | null;
+  selectedCollision: CollisionPoint | null;
+  placeInfo: PlaceInfo | null;
   sidebarOpen: boolean;
   setViewport: (viewport: Partial<MapState["viewport"]>) => void;
   selectHotspot: (hotspot: ClusteredHotspot | null) => void;
+  selectCollision: (collision: CollisionPoint | null) => void;
+  setPlaceInfo: (placeInfo: PlaceInfo | null) => void;
   flyTo: (lng: number, lat: number, zoom?: number) => void;
 }
 
@@ -26,11 +30,16 @@ export const useMapStore = create<MapState>((set) => ({
     bearing: -17.6,
   },
   selectedHotspot: null,
+  selectedCollision: null,
+  placeInfo: null,
   sidebarOpen: false,
   setViewport: (viewport) =>
     set((state) => ({ viewport: { ...state.viewport, ...viewport } })),
   selectHotspot: (hotspot) =>
-    set({ selectedHotspot: hotspot, sidebarOpen: hotspot !== null }),
+    set({ selectedHotspot: hotspot, selectedCollision: null, sidebarOpen: hotspot !== null }),
+  selectCollision: (collision) =>
+    set({ selectedCollision: collision, selectedHotspot: null, sidebarOpen: collision !== null }),
+  setPlaceInfo: (placeInfo) => set({ placeInfo }),
   flyTo: (lng, lat, zoom = MAP_CONFIG.HOTSPOT_ZOOM) =>
     set((state) => ({
       viewport: { ...state.viewport, longitude: lng, latitude: lat, zoom },
