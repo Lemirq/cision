@@ -1,12 +1,25 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
+import { useEffect } from "react";
 import { useMapStore } from "@/stores/map-store";
 import { X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OverviewTab } from "./overview-tab";
 import { PhotoProvider } from "react-photo-view";
+import { ImageChatSidebar } from "./image-chat-sidebar";
 import type { ClusteredHotspot } from "@/types/collision";
+
+function PhotoViewOverlay({ imageSrc }: { imageSrc?: string }) {
+  useEffect(() => {
+    document.body.classList.add("photo-view-open");
+    return () => {
+      document.body.classList.remove("photo-view-open");
+    };
+  }, []);
+
+  return <ImageChatSidebar imageSrc={imageSrc} />;
+}
 
 export function IntersectionSidebar() {
   const {
@@ -106,7 +119,13 @@ export function IntersectionSidebar() {
             </div>
 
             <div className="flex-1 overflow-y-auto p-4">
-              <PhotoProvider>
+              <PhotoProvider
+                photoWrapClassName="photo-view-with-sidebar"
+                overlayRender={({ images, index, onClose }) => {
+                  const currentImage = images[index];
+                  return <PhotoViewOverlay imageSrc={currentImage?.src} />;
+                }}
+              >
                 <Tabs defaultValue="overview" className="w-full">
                   <TabsList className="grid w-full grid-cols-3 bg-zinc-900">
                     <TabsTrigger value="overview">Overview</TabsTrigger>

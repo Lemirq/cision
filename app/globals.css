@@ -186,3 +186,40 @@
     letter-spacing: var(--tracking-normal);
   }
 }
+
+/* Custom styles for react-photo-view with chat sidebar */
+@layer components {
+  /* When photo view is open, adjust the layout to accommodate sidebar */
+  body.photo-view-open .PhotoView__PhotoViewWrap {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  /* Shift the photo view content to the left when sidebar is present */
+  /* The content is typically centered, so we adjust it to be left-aligned with space for sidebar */
+  body.photo-view-open .PhotoView__PhotoViewContent {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    margin-left: 0 !important;
+    margin-right: 400px !important;
+    max-width: calc(100vw - 400px) !important;
+  }
+
+  /* Ensure smooth transitions for the image */
+  body.photo-view-open .PhotoView__PhotoViewImage {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  /* Make sure the overlay (backdrop) still covers the full screen and is clickable */
+  .PhotoView__PhotoViewOverlay {
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  /* Ensure the photo view container allows for sidebar */
+  body.photo-view-open .PhotoView__PhotoView {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  /* Ensure overlay clicks work - the sidebar will handle its own pointer events */
+  body.photo-view-open .PhotoView__PhotoViewOverlay {
+    pointer-events: auto;
+  }
+}

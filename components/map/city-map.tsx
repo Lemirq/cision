@@ -44,14 +44,30 @@ export function CityMap({ hotspots = [] }: CityMapProps) {
     const fetchCollisions = async () => {
       try {
         setIsLoading(true);
+        console.log("[CityMap] Fetching collisions from API...");
+        const startTime = Date.now();
+        
         const response = await fetch("/api/collisions?limit=147888"); // Fetch all collisions
+        
+        const fetchTime = Date.now() - startTime;
+        console.log(`[CityMap] Fetch completed in ${fetchTime}ms, status: ${response.status}`);
+        
         if (!response.ok) {
-          throw new Error("Failed to fetch collisions");
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || `Failed to fetch collisions: ${response.status}`);
         }
+        
         const data = await response.json();
+        const parseTime = Date.now() - startTime;
+        console.log(`[CityMap] Data parsed in ${parseTime}ms, received ${data.features?.length || 0} features`);
+        
         setCollisionsData(data);
       } catch (error) {
-        console.error("Error fetching collisions:", error);
+        console.error("[CityMap] Error fetching collisions:", error);
+        if (error instanceof Error) {
+          console.error("[CityMap] Error message:", error.message);
+          console.error("[CityMap] Error stack:", error.stack);
+        }
       } finally {
         setIsLoading(false);
       }
@@ -64,17 +80,29 @@ export function CityMap({ hotspots = [] }: CityMapProps) {
   useEffect(() => {
     const fetchClusters = async () => {
       try {
+        console.log("[CityMap] Fetching clusters from API...");
+        const startTime = Date.now();
+        
         const response = await fetch("/api/clusters?limit=147888");
+        
+        const fetchTime = Date.now() - startTime;
+        console.log(`[CityMap] Clusters fetch completed in ${fetchTime}ms, status: ${response.status}`);
+        
         if (!response.ok) {
-          throw new Error("Failed to fetch clusters");
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || `Failed to fetch clusters: ${response.status}`);
         }
+        
         const clusters = await response.json();
+        const parseTime = Date.now() - startTime;
+        console.log(`[CityMap] Clusters parsed in ${parseTime}ms, received ${clusters.length} clusters`);
+        
         setClusteredHotspots(clusters);
 
         // Debug: Log cluster data to verify collisions are included
         if (clusters.length > 0) {
-          console.log("Clusters loaded:", clusters.length);
-          console.log("First cluster sample:", {
+          console.log("[CityMap] Clusters loaded:", clusters.length);
+          console.log("[CityMap] First cluster sample:", {
             id: clusters[0].id,
             total_count: clusters[0].total_count,
             collisions_count: clusters[0].collisions?.length || 0,
@@ -82,7 +110,11 @@ export function CityMap({ hotspots = [] }: CityMapProps) {
           });
         }
       } catch (error) {
-        console.error("Error fetching clusters:", error);
+        console.error("[CityMap] Error fetching clusters:", error);
+        if (error instanceof Error) {
+          console.error("[CityMap] Error message:", error.message);
+          console.error("[CityMap] Error stack:", error.stack);
+        }
       }
     };
 
