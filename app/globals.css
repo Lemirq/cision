@@ -189,6 +189,16 @@
 
 /* Custom styles for react-photo-view with chat sidebar */
 @layer components {
+  /* Lower z-index of PhotoView portal so it doesn't block sidebars */
+  .PhotoView-Portal {
+    z-index: 30 !important;
+  }
+
+  /* Ensure backdrop has lower z-index */
+  .PhotoView-Slider__Backdrop {
+    z-index: -1 !important;
+  }
+
   /* When photo view is open, adjust the layout to accommodate sidebar */
   body.photo-view-open .PhotoView__PhotoViewWrap {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
