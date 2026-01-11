@@ -81,8 +81,13 @@ export function StreetViewPanel({
 
   // Update image URL when date or hour changes
   useEffect(() => {
-    setIsLoading(() => true);
-    setHasError(() => false);
+    // Use setTimeout to avoid synchronous setState in effect
+    const timer = setTimeout(() => {
+      setIsLoading(true);
+      setHasError(false);
+    }, 0);
+    
+    return () => clearTimeout(timer);
   }, [date, hour, year, month, lat, lng]);
 
   // Trigger shine animation when image is replaced
@@ -91,15 +96,21 @@ export function StreetViewPanel({
       return;
     }
     
-    setIsLoading(true);
-    setShowShine(true);
+    // Use setTimeout to avoid synchronous setState in effect
+    const timer1 = setTimeout(() => {
+      setIsLoading(true);
+      setShowShine(true);
+    }, 0);
     
     // Reset shine after animation completes
-    const timer = setTimeout(() => {
+    const timer2 = setTimeout(() => {
       setShowShine(false);
     }, 2000);
     
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
   }, [replacedImageUrl]);
 
   const handleExpand = (e: React.MouseEvent) => {

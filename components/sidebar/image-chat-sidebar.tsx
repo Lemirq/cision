@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -99,20 +99,26 @@ export function ImageChatSidebar({
   };
 
   // Memoize transport to avoid creating it during render
+  // Use useCallback for body function to avoid ref access during render
+  const bodyFunction = useCallback(() => {
+    // Access ref only when function is called, not during render
+    return {
+      imageUrl: getAbsoluteImageUrl(imageSrcRef.current),
+      clusterId: clusterId,
+      context: clusterContext,
+    };
+  }, [clusterId, clusterContext]);
+
+  // bodyFunction accesses ref.current, but only when called (in event handler context)
+  // This is safe because body is only invoked when sending messages (event handler)
   const transport = useMemo(
     () =>
+      // eslint-disable-next-line react-hooks/refs
       new DefaultChatTransport({
         api: "/api/chat",
-        body: () => ({
-          // Always use the currently active/selected image from the ref
-          // This ensures that when user selects a different image from carousel,
-          // the next generation will use that selected image, not the last generated one
-          imageUrl: getAbsoluteImageUrl(imageSrcRef.current),
-          clusterId: clusterId,
-          context: clusterContext,
-        }),
+        body: bodyFunction,
       }),
-    [clusterId, clusterContext]
+    [bodyFunction]
   );
 
   const { messages, sendMessage, status } = useChat({

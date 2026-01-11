@@ -34,7 +34,6 @@ export function CityMap({ hotspots = [] }: CityMapProps) {
   const [clusteredHotspots, setClusteredHotspots] = useState<
     ClusteredHotspot[]
   >([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [showDebugView] = useState(false); // Toggle for debug visualization
 
   // Convert clusters to GeoJSON format for heatmap
@@ -65,7 +64,6 @@ export function CityMap({ hotspots = [] }: CityMapProps) {
   useEffect(() => {
     const fetchClusters = async () => {
       try {
-        setIsLoading(true);
         console.log("[CityMap] Fetching clusters from API...");
         const startTime = Date.now();
 
@@ -109,8 +107,6 @@ export function CityMap({ hotspots = [] }: CityMapProps) {
           console.error("[CityMap] Error message:", error.message);
           console.error("[CityMap] Error stack:", error.stack);
         }
-      } finally {
-        setIsLoading(false);
       }
     };
 
@@ -261,8 +257,6 @@ export function CityMap({ hotspots = [] }: CityMapProps) {
     };
   };
 
-  // Combine both old hotspots and new clustered hotspots
-  const allHotspots = [...hotspots, ...clusteredHotspots];
 
   // Create debug visualization data: 50m radius circles and individual collision points
   const debugRadiusCircles =

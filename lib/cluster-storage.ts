@@ -136,7 +136,7 @@ export function addImageVersion(
 /**
  * Update current image for a cluster
  */
-export function updateCurrentImage(clusterId: string, imageUrl: string): void {
+export function updateCurrentImage(clusterId: string, imageUrl: string | null): void {
   const store = useMapStore.getState();
   const existing = store.getClusterData(clusterId);
   if (!existing) {
