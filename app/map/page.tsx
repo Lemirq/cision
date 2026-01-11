@@ -13,7 +13,9 @@ import { useMapStore } from "@/stores/map-store";
 export default function App() {
   const [isVoiceAgentsOpen, setIsVoiceAgentsOpen] = useState(false);
   const [isSafetyAuditOpen, setIsSafetyAuditOpen] = useState(false);
-  const [lastSelectedHotspotId, setLastSelectedHotspotId] = useState<string | null>(null);
+  const [lastSelectedHotspotId, setLastSelectedHotspotId] = useState<
+    string | null
+  >(null);
   const selectedHotspot = useMapStore((state) => state.selectedHotspot);
 
   // Automatically open Safety Audit sidebar when a new hotspot is selected
@@ -50,7 +52,8 @@ export default function App() {
   };
 
   // Calculate padding based on which sidebars are open
-  const leftPadding = isVoiceAgentsOpen || isSafetyAuditOpen ? "pl-[20rem]" : "pl-16";
+  const leftPadding =
+    isVoiceAgentsOpen || isSafetyAuditOpen ? "pl-[20rem]" : "pl-16";
 
   return (
     <main className="relative h-screen w-screen overflow-hidden bg-zinc-950">
@@ -69,7 +72,7 @@ export default function App() {
         onClose={() => setIsSafetyAuditOpen(false)}
       />
       <div className={`${leftPadding} h-full relative`}>
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
+        <div className="absolute w-full top-4 left-1/2 -translate-x-1/2 z-10">
           <SearchBar hotspots={DEMO_HOTSPOTS} />
         </div>
         <CityMap hotspots={DEMO_HOTSPOTS} />

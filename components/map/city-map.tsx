@@ -30,6 +30,7 @@ export function CityMap({ hotspots = [] }: CityMapProps) {
     setPlaceInfo,
     selectedHotspot,
     selectedCollision,
+    setAllHotspots,
   } = useMapStore();
   const mapRef = useRef<MapRef>(null);
   const [clusteredHotspots, setClusteredHotspots] = useState<
@@ -91,6 +92,8 @@ export function CityMap({ hotspots = [] }: CityMapProps) {
         );
 
         setClusteredHotspots(clusters);
+        // Store all hotspots in the map store for normalization
+        setAllHotspots(clusters);
 
         // Debug: Log cluster data to verify collisions are included
         if (clusters.length > 0) {

@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { ClusteredHotspot, CollisionPoint, PlaceInfo } from "@/types/collision";
 import type { SafetyAuditResult } from "@/types/safety-audit";
+import type { StoredClusterData } from "@/types/cluster-storage";
 import { MAP_CONFIG } from "@/lib/constants";
 
 interface MapState {
@@ -17,6 +18,10 @@ interface MapState {
   sidebarOpen: boolean;
   safetyAudit: SafetyAuditResult | null;
   isGeneratingAudit: boolean;
+  // Cluster data storage - maps clusterId to StoredClusterData
+  clusterData: Record<string, StoredClusterData>;
+  // All hotspots for normalization calculations
+  allHotspots: ClusteredHotspot[];
   setSidebarOpen: (open: boolean) => void;
   toggleSidebar: () => void;
   setViewport: (viewport: Partial<MapState["viewport"]>) => void;
@@ -26,9 +31,15 @@ interface MapState {
   setSafetyAudit: (audit: SafetyAuditResult | null) => void;
   setIsGeneratingAudit: (isGenerating: boolean) => void;
   flyTo: (lng: number, lat: number, zoom?: number) => void;
+  // Cluster data management
+  getClusterData: (clusterId: string) => StoredClusterData | null;
+  setClusterData: (clusterId: string, data: StoredClusterData) => void;
+  updateClusterData: (clusterId: string, updater: (data: StoredClusterData) => StoredClusterData) => void;
+  // Hotspot management
+  setAllHotspots: (hotspots: ClusteredHotspot[]) => void;
 }
 
-export const useMapStore = create<MapState>((set) => ({
+export const useMapStore = create<MapState>((set, get) => ({
   viewport: {
     longitude: MAP_CONFIG.NORTH_AMERICA_CENTER[0],
     latitude: MAP_CONFIG.NORTH_AMERICA_CENTER[1],
@@ -42,6 +53,8 @@ export const useMapStore = create<MapState>((set) => ({
   sidebarOpen: false,
   safetyAudit: null,
   isGeneratingAudit: false,
+  clusterData: {},
+  allHotspots: [],
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
   toggleSidebar: () =>
     set((state) => ({ sidebarOpen: !state.sidebarOpen })),
@@ -63,4 +76,33 @@ export const useMapStore = create<MapState>((set) => ({
     set((state) => ({
       viewport: { ...state.viewport, longitude: lng, latitude: lat, zoom },
     })),
+  // Cluster data management
+  getClusterData: (clusterId: string) => {
+    return get().clusterData[clusterId] || null;
+  },
+  setClusterData: (clusterId: string, data: StoredClusterData) => {
+    set((state) => ({
+      clusterData: {
+        ...state.clusterData,
+        [clusterId]: {
+          ...data,
+          clusterId,
+          lastUpdated: Date.now(),
+        },
+      },
+    }));
+  },
+  updateClusterData: (clusterId: string, updater: (data: StoredClusterData) => StoredClusterData) => {
+    set((state) => {
+      const existing = state.clusterData[clusterId];
+      if (!existing) return state;
+      return {
+        clusterData: {
+          ...state.clusterData,
+          [clusterId]: updater(existing),
+        },
+      };
+    });
+  },
+  setAllHotspots: (hotspots) => set({ allHotspots: hotspots }),
 }));

@@ -8,8 +8,18 @@ export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages, imageUrl }: { messages: UIMessage[]; imageUrl?: string } =
-      await req.json();
+    const {
+      messages,
+      imageUrl,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      clusterId, // Available for future server-side cluster data access if needed
+      context,
+    }: {
+      messages: UIMessage[];
+      imageUrl?: string;
+      clusterId?: string;
+      context?: string;
+    } = await req.json();
 
     if (!imageUrl) {
       return new Response(
@@ -37,9 +47,8 @@ export async function POST(req: NextRequest) {
       process.env.GOOGLE_GENERATIVE_AI_API_KEY = apiKey;
     }
 
-    const result = streamText({
-      model: google("gemini-2.0-flash-exp"),
-      system: `You are an AI agent specialized in redefining and improving intersections for better safety and urban design. 
+    // Build system prompt with comprehensive safety audit context
+    let systemPrompt = `You are an AI agent specialized in redefining and improving intersections for better safety and urban design. 
 You help users reimagine intersections by generating new images based on their requests. 
 When a user asks you to modify or improve an intersection, use the generateImage tool to create a new visualization.
 
@@ -51,7 +60,35 @@ Guidelines for image generation:
 - If a generation doesn't work as expected, try again with a different approach or more specific details.
 - Always explain what improvements you're making and why they enhance safety.
 
-Be conversational, helpful, and explain what improvements you're making when generating images.`,
+Be conversational, helpful, and explain what improvements you're making when generating images.`;
+
+    // Add comprehensive safety audit context if available
+    if (context && context.trim()) {
+      systemPrompt += `\n\n=== COMPREHENSIVE INTERSECTION SAFETY AUDIT DATA ===\n\n${context}\n\n=== END OF SAFETY AUDIT DATA ===\n\n`;
+      systemPrompt += `IMPORTANT CONTEXT USAGE INSTRUCTIONS:\n`;
+      systemPrompt += `- You have been provided with complete safety audit data for this intersection, including:\n`;
+      systemPrompt += `  * Collision statistics (total, fatal, cyclist, pedestrian counts)\n`;
+      systemPrompt += `  * Safety metrics scores (signage, lighting, crosswalk visibility, bike infrastructure, pedestrian infrastructure, traffic calming)\n`;
+      systemPrompt += `  * Identified safety flaws with severity levels\n`;
+      systemPrompt += `  * Improvement suggestions with priorities and expected impacts\n`;
+      systemPrompt += `  * Missing infrastructure gaps\n`;
+      systemPrompt += `  * Recent improvements and modifications made to the intersection\n`;
+      systemPrompt += `\n`;
+      systemPrompt += `- Use this comprehensive data to:\n`;
+      systemPrompt += `  * Provide informed, context-aware responses that reference specific safety issues\n`;
+      systemPrompt += `  * Acknowledge recent improvements positively when users have made changes\n`;
+      systemPrompt += `  * Suggest enhancements that address the identified flaws and infrastructure gaps\n`;
+      systemPrompt += `  * Prioritize suggestions based on the severity of issues and improvement priorities\n`;
+      systemPrompt += `  * Reference specific metrics when explaining why certain improvements are needed\n`;
+      systemPrompt += `  * Consider the collision history when recommending safety interventions\n`;
+      systemPrompt += `\n`;
+      systemPrompt += `- When generating images, incorporate improvements that address the safety audit findings.\n`;
+      systemPrompt += `- Be specific about which safety issues you're addressing with each improvement.\n`;
+    }
+
+    const result = streamText({
+      model: google("gemini-2.0-flash-exp"),
+      system: systemPrompt,
       messages: await convertToModelMessages(messages),
       tools: {
         generateImage: {
@@ -120,7 +157,7 @@ Be conversational, helpful, and explain what improvements you're making when gen
                 ).metadata();
                 originalWidth = metadata.width || 1280;
                 originalHeight = metadata.height || 1280;
-              } catch (error) {
+              } catch {
                 // Fallback dimensions if we can't read metadata
                 originalWidth = 1280;
                 originalHeight = 1280;

@@ -42,7 +42,7 @@ export function SuggestionCard({ suggestion, index }: SuggestionCardProps) {
       className={cn(
         "rounded-lg border p-4 space-y-3",
         colors.bg,
-        colors.border
+        colors.border,
       )}
     >
       <div className="flex items-start justify-between gap-2">
@@ -63,19 +63,19 @@ export function SuggestionCard({ suggestion, index }: SuggestionCardProps) {
         <span
           className={cn(
             "text-xs px-2 py-0.5 rounded border font-medium uppercase tracking-wider",
-            colors.badge
+            colors.badge,
           )}
         >
           {suggestion.priority} priority
         </span>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-zinc-800">
+      <div className="grid grid-cols-1 gap-2 pt-2 border-t border-zinc-800">
         <div className="flex items-start gap-2 min-w-0">
           <DollarSign className="h-3 w-3 text-zinc-400 mt-0.5 shrink-0" />
           <div className="min-w-0 flex-1">
             <p className="text-xs text-zinc-500">Cost</p>
-            <p className="text-xs text-zinc-300 font-medium truncate">
+            <p className="text-xs text-zinc-300 font-medium">
               {suggestion.estimatedCost}
             </p>
           </div>
@@ -84,7 +84,7 @@ export function SuggestionCard({ suggestion, index }: SuggestionCardProps) {
           <TrendingUp className="h-3 w-3 text-zinc-400 mt-0.5 shrink-0" />
           <div className="min-w-0 flex-1">
             <p className="text-xs text-zinc-500">Impact</p>
-            <p className="text-xs text-zinc-300 font-medium truncate">
+            <p className="text-xs text-zinc-300 font-medium">
               {suggestion.expectedImpact}
             </p>
           </div>

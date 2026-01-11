@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { RotateCw, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PhotoView } from "react-photo-view";
@@ -16,12 +16,19 @@ interface StreetViewPanelProps {
   replacedImageUrl?: string | null; // Generated image to replace the street view
 }
 
-export function StreetViewPanel({ lat, lng, date, hour, year, month, replacedImageUrl }: StreetViewPanelProps) {
+export function StreetViewPanel({
+  lat,
+  lng,
+  date,
+  hour,
+  year,
+  month,
+  replacedImageUrl,
+}: StreetViewPanelProps) {
   const [heading, setHeading] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [showShine, setShowShine] = useState(false);
-  const imageRef = useRef<HTMLImageElement>(null);
 
   // Construct date parameter for Google Street View API
   // Format: YYYY-MM or YYYY-MM-DD
@@ -45,13 +52,13 @@ export function StreetViewPanel({ lat, lng, date, hour, year, month, replacedIma
         return date;
       }
     }
-    
+
     // Fall back to constructing from year and month
     if (year && month) {
       const monthNum = month.padStart(2, "0");
       return `${year}-${monthNum}`;
     }
-    
+
     return "";
   };
 
@@ -93,8 +100,12 @@ export function StreetViewPanel({ lat, lng, date, hour, year, month, replacedIma
 
   const handleExpand = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (imageRef.current) {
-      imageRef.current.click();
+    // Find and click the image element to open PhotoView
+    const imgElement = document.querySelector(
+      `img[src="${displayUrl}"]`
+    ) as HTMLImageElement;
+    if (imgElement) {
+      imgElement.click();
     }
   };
 
@@ -119,23 +130,23 @@ export function StreetViewPanel({ lat, lng, date, hour, year, month, replacedIma
       ) : (
         <div className="relative">
           <PhotoView src={displayUrl}>
-            <motion.img
-              ref={imageRef}
+            <img
               src={displayUrl}
               alt={replacedImageUrl ? "Redesigned Intersection" : "Street View"}
-              className="w-full h-64 object-contain cursor-pointer"
+              className={`w-full h-64 object-cover cursor-pointer ${
+                replacedImageUrl
+                  ? "animate-in fade-in zoom-in duration-500"
+                  : ""
+              }`}
               onLoad={() => setIsLoading(false)}
               onError={handleImageError}
               onClick={(e) => {
                 // Prevent click from closing PhotoView
                 e.stopPropagation();
               }}
-              initial={replacedImageUrl ? { opacity: 0, scale: 1.05 } : false}
-              animate={replacedImageUrl ? { opacity: 1, scale: 1 } : {}}
-              transition={{ duration: 0.5, ease: "easeOut" }}
             />
           </PhotoView>
-          
+
           {/* Shine effect overlay */}
           <AnimatePresence>
             {showShine && replacedImageUrl && (
@@ -149,7 +160,8 @@ export function StreetViewPanel({ lat, lng, date, hour, year, month, replacedIma
                   ease: "easeInOut",
                 }}
                 style={{
-                  background: "linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%)",
+                  background:
+                    "linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%)",
                   transform: "skewX(-20deg)",
                 }}
               />
