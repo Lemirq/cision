@@ -8,6 +8,7 @@ import Map, {
   MapRef,
   type MapMouseEvent,
 } from "react-map-gl/mapbox";
+import "mapbox-gl/dist/mapbox-gl.css";
 import { useMapStore } from "@/stores/map-store";
 import type {
   ClusteredHotspot,
