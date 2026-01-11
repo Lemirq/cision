@@ -181,7 +181,7 @@ Be SPECIFIC. Reference ACTUAL visual elements in the image.`;
 
     // Generate the safety audit using structured output
     const result = await generateText({
-      model: google("gemini-2.0-flash-exp"),
+      model: google("gemini-2.5-flash-lite"),
       prompt: [
         {
           role: "user",

@@ -87,7 +87,7 @@ Be conversational, helpful, and explain what improvements you're making when gen
     }
 
     const result = streamText({
-      model: google("gemini-2.0-flash-exp"),
+      model: google("gemini-2.5-flash-lite"),
       system: systemPrompt,
       messages: await convertToModelMessages(messages),
       tools: {
