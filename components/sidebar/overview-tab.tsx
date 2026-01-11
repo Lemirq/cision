@@ -11,7 +11,6 @@ import type {
 } from "@/types/collision";
 import {
   MapPin,
-  ChevronRight,
   Calendar,
   Clock,
   AlertTriangle,
@@ -73,90 +72,42 @@ export function OverviewTab({
       {/* Show cluster information if it's a cluster (multiple collisions) */}
       {!collision && hotspot.total_count > 1 && (
         <div className="space-y-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <AlertTriangle className="h-4 w-4 text-amber-400" />
-            <div>
-              <p className="text-sm font-medium text-amber-400">
-                Problem Area - {hotspot.total_count} collisions
-              </p>
-              <p className="text-xs text-zinc-500 mt-1">
-                Multiple accidents at this location indicate infrastructure
-                issues
-              </p>
-            </div>
-          </div>
+          <button
+            onClick={() => {
+              // Find and click the street view image to open PhotoView
+              const image = document.querySelector('img[alt="Street View"], img[alt="Redesigned Intersection"]');
+              if (image) {
+                (image as HTMLElement).click();
+              }
+            }}
+            className="w-full px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-all duration-200 shadow-lg shadow-green-600/20 hover:shadow-green-600/30 hover:scale-[1.02] active:scale-[0.98]"
+          >
+            FIX
+          </button>
 
           {/* Date range for cluster */}
           {hotspot.collisions && hotspot.collisions.length > 0 && (
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-3 w-3 text-zinc-500" />
-                <div>
-                  <p className="text-xs text-zinc-500">Date Range</p>
-                  <p className="text-sm text-white">
-                    {(() => {
-                      const dates = hotspot.collisions
-                        .map((c: CollisionPoint) => {
-                          if (c.year && c.month) {
-                            return `${c.month} ${c.year}`;
-                          }
-                          // Remove time portion from date string if present
-                          return c.date ? c.date.split(" ")[0] : "";
-                        })
-                        .filter(Boolean)
-                        .sort();
-                      if (dates.length === 0) return "Unknown";
-                      if (dates.length === 1) return dates[0];
-                      return `${dates[0]} - ${dates[dates.length - 1]}`;
-                    })()}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="h-3 w-3 text-zinc-500" />
-                <div>
-                  <p className="text-xs text-zinc-500">Collisions</p>
-                  <p className="text-sm text-white">
-                    {hotspot.total_count} total
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Severity breakdown */}
-          {(hotspot.fatal_count > 0 ||
-            hotspot.cyclist_count > 0 ||
-            hotspot.pedestrian_count > 0) && (
-            <div>
-              <p className="text-xs text-zinc-500 mb-2">Severity Breakdown</p>
-              <div className="flex flex-wrap gap-2">
-                {hotspot.fatal_count > 0 && (
-                  <div className="flex items-center gap-1 px-2 py-1 rounded bg-red-900/30 border border-red-700/50">
-                    <AlertTriangle className="h-3 w-3 text-red-400" />
-                    <span className="text-xs text-red-400">
-                      {hotspot.fatal_count} Fatal
-                    </span>
-                  </div>
-                )}
-                {hotspot.cyclist_count > 0 && (
-                  <div className="flex items-center gap-1 px-2 py-1 rounded bg-zinc-800">
-                    <Bike className="h-3 w-3 text-zinc-400" />
-                    <span className="text-xs text-zinc-300">
-                      {hotspot.cyclist_count} Cyclist
-                      {hotspot.cyclist_count > 1 ? "s" : ""}
-                    </span>
-                  </div>
-                )}
-                {hotspot.pedestrian_count > 0 && (
-                  <div className="flex items-center gap-1 px-2 py-1 rounded bg-zinc-800">
-                    <User className="h-3 w-3 text-zinc-400" />
-                    <span className="text-xs text-zinc-300">
-                      {hotspot.pedestrian_count} Pedestrian
-                      {hotspot.pedestrian_count > 1 ? "s" : ""}
-                    </span>
-                  </div>
-                )}
+            <div className="flex items-center gap-2">
+              <Calendar className="h-3 w-3 text-zinc-500" />
+              <div>
+                <p className="text-xs text-zinc-500">Date Range</p>
+                <p className="text-sm text-white">
+                  {(() => {
+                    const dates = hotspot.collisions
+                      .map((c: CollisionPoint) => {
+                        if (c.year && c.month) {
+                          return `${c.month} ${c.year}`;
+                        }
+                        // Remove time portion from date string if present
+                        return c.date ? c.date.split(" ")[0] : "";
+                      })
+                      .filter(Boolean)
+                      .sort();
+                    if (dates.length === 0) return "Unknown";
+                    if (dates.length === 1) return dates[0];
+                    return `${dates[0]} - ${dates[dates.length - 1]}`;
+                  })()}
+                </p>
               </div>
             </div>
           )}
@@ -277,13 +228,6 @@ export function OverviewTab({
       <StatsGrid hotspot={hotspot} />
 
       <SeverityProgressBar score={hotspot.severity_score} />
-
-      <div className="pt-2">
-        <button className="w-full flex items-center justify-between p-3 rounded-lg bg-blue-600 hover:bg-blue-700 transition-colors">
-          <span className="text-white font-medium">Generate Safety Audit</span>
-          <ChevronRight className="h-4 w-4 text-white/80" />
-        </button>
-      </div>
     </div>
   );
 }

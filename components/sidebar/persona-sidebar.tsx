@@ -14,6 +14,7 @@ import {
   HardHat,
   ArrowLeft,
   ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
 import { useConversation } from "@elevenlabs/react";
 import { cn } from "@/lib/utils";
@@ -94,7 +95,12 @@ const getColorClasses = (color: string, type: "bg" | "text" | "bg-light") => {
   return colors[color]?.[type] || colors.green[type];
 };
 
-export function PersonaSidebar() {
+interface PersonaSidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export function PersonaSidebar({ isOpen = false, onClose }: PersonaSidebarProps) {
   const [currentView, setCurrentView] = useState<"list" | "conversation">(
     "list"
   );
@@ -252,14 +258,20 @@ export function PersonaSidebar() {
   const isConnecting = connectionStatus === "connecting";
   const isCallInProgress = isRinging || isConnecting || isConnected;
 
-  // Sidebar is always visible in this baseline state
-
   return (
-    <motion.aside
-      initial={{ x: 0 }}
-      animate={{ x: 0 }}
-      className="fixed left-16 top-0 z-40 h-screen w-80 border-r border-zinc-800 bg-zinc-950 flex flex-col"
-    >
+    <AnimatePresence>
+      {isOpen && (
+        <motion.aside
+          initial={{ x: "-100%", opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: "-100%", opacity: 0 }}
+          transition={{
+            type: "spring",
+            damping: 25,
+            stiffness: 200,
+          }}
+          className="fixed left-16 top-0 z-40 h-screen w-80 border-r border-zinc-800 bg-zinc-950 flex flex-col"
+        >
       <AnimatePresence mode="wait">
         {currentView === "list" ? (
           <motion.div
@@ -271,12 +283,26 @@ export function PersonaSidebar() {
           >
             {/* Header */}
             <div className="border-b border-zinc-800 p-4">
-              <h2 className="text-lg font-semibold text-white mb-1">
-                Voice Agents
-              </h2>
-              <p className="text-xs text-zinc-400">
-                Select a stakeholder to talk about intersections
-              </p>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex-1">
+                  <h2 className="text-lg font-semibold text-white mb-1">
+                    Voice Agents
+                  </h2>
+                  <p className="text-xs text-zinc-400">
+                    Select a stakeholder to talk about intersections
+                  </p>
+                </div>
+                {onClose && (
+                  <button
+                    onClick={onClose}
+                    className="ml-2 p-2 hover:bg-zinc-800 rounded-lg transition-colors flex items-center"
+                    title="Close"
+                  >
+                    <ChevronLeft className="h-5 w-5 text-zinc-400" />
+                    <ChevronLeft className="h-5 w-5 text-zinc-400 -ml-2" />
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Agent List */}
@@ -664,6 +690,8 @@ export function PersonaSidebar() {
           </motion.div>
         ) : null}
       </AnimatePresence>
-    </motion.aside>
+        </motion.aside>
+      )}
+    </AnimatePresence>
   );
 }
