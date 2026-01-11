@@ -222,4 +222,19 @@
   body.photo-view-open .PhotoView__PhotoViewOverlay {
     pointer-events: auto;
   }
+
+  /* Prevent PhotoView from closing when clicking on the image */
+  body.photo-view-open .PhotoView__PhotoViewImage {
+    pointer-events: auto;
+  }
+
+  /* Prevent the image click from closing PhotoView */
+  body.photo-view-open .PhotoView__PhotoViewContent {
+    pointer-events: auto;
+  }
+
+  /* Stop clicks on the image from propagating to close PhotoView */
+  body.photo-view-open .PhotoView__PhotoViewImage img {
+    pointer-events: auto;
+  }
 }

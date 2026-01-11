@@ -1,16 +1,28 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useMapStore } from "@/stores/map-store";
-import { X } from "lucide-react";
+import { X, Undo2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OverviewTab } from "./overview-tab";
 import { PhotoProvider } from "react-photo-view";
 import { ImageChatSidebar } from "./image-chat-sidebar";
 import type { ClusteredHotspot } from "@/types/collision";
 
-function PhotoViewOverlay({ imageSrc }: { imageSrc?: string }) {
+function PhotoViewOverlay({ 
+  imageSrc, 
+  onImageReplaced,
+  onClose,
+  replacedImageUrl,
+  onUndo
+}: { 
+  imageSrc?: string;
+  onImageReplaced?: (imageUrl: string | null) => void;
+  onClose?: () => void;
+  replacedImageUrl?: string | null;
+  onUndo?: () => void;
+}) {
   useEffect(() => {
     document.body.classList.add("photo-view-open");
     return () => {
@@ -18,7 +30,45 @@ function PhotoViewOverlay({ imageSrc }: { imageSrc?: string }) {
     };
   }, []);
 
-  return <ImageChatSidebar imageSrc={imageSrc} />;
+  // Use replaced image if available, otherwise use original imageSrc
+  const currentImageSrc = replacedImageUrl || imageSrc;
+
+  return (
+    <>
+      <ImageChatSidebar 
+        imageSrc={currentImageSrc} 
+        onImageReplaced={onImageReplaced} 
+        onClose={onClose} 
+      />
+      {replacedImageUrl && onUndo && (
+        <UndoButton onUndo={onUndo} />
+      )}
+    </>
+  );
+}
+
+function UndoButton({ onUndo }: { onUndo: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.8, y: -20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.8, y: -20 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      className="fixed top-4 left-4 z-[70] pointer-events-auto"
+    >
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onUndo();
+        }}
+        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white shadow-lg transition-colors"
+        title="Undo - Restore original image"
+      >
+        <Undo2 className="h-4 w-4" />
+        <span className="text-sm font-medium">Undo</span>
+      </button>
+    </motion.div>
+  );
 }
 
 export function IntersectionSidebar() {
@@ -29,13 +79,28 @@ export function IntersectionSidebar() {
     selectHotspot,
     selectCollision,
   } = useMapStore();
+  const [replacedImageUrl, setReplacedImageUrl] = useState<string | null>(null);
   const isOpen = selectedHotspot !== null || selectedCollision !== null;
   const displayKey = selectedCollision?.id || selectedHotspot?.id || "none";
 
   const handleClose = () => {
     selectHotspot(null);
     selectCollision(null);
+    setReplacedImageUrl(null); // Reset replaced image when closing
   };
+
+  const handleImageReplaced = (imageUrl: string | null) => {
+    setReplacedImageUrl(imageUrl);
+  };
+
+  const handleUndo = () => {
+    setReplacedImageUrl(null);
+  };
+
+  // Reset replaced image when switching between hotspots/collisions
+  useEffect(() => {
+    setReplacedImageUrl(null);
+  }, [displayKey]);
 
   // Convert CollisionPoint to ClusteredHotspot format for UI compatibility
   const displayHotspot: ClusteredHotspot | null =
@@ -121,9 +186,18 @@ export function IntersectionSidebar() {
             <div className="flex-1 overflow-y-auto p-4">
               <PhotoProvider
                 photoWrapClassName="photo-view-with-sidebar"
-                overlayRender={({ images, index, onClose }) => {
+                photoClosable={false}
+                overlayRender={({ images, index, onClose: photoViewClose }) => {
                   const currentImage = images[index];
-                  return <PhotoViewOverlay imageSrc={currentImage?.src} />;
+                  return (
+                    <PhotoViewOverlay 
+                      imageSrc={currentImage?.src} 
+                      onImageReplaced={handleImageReplaced}
+                      onClose={photoViewClose}
+                      replacedImageUrl={replacedImageUrl}
+                      onUndo={handleUndo}
+                    />
+                  );
                 }}
               >
                 <Tabs defaultValue="overview" className="w-full">
@@ -138,6 +212,8 @@ export function IntersectionSidebar() {
                       hotspot={displayHotspot}
                       collision={selectedCollision}
                       placeInfo={placeInfo}
+                      onImageReplaced={handleImageReplaced}
+                      replacedImageUrl={replacedImageUrl}
                     />
                   </TabsContent>
 

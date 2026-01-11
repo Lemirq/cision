@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Bot, User, Loader2 } from "lucide-react";
+import { Send, Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Message {
@@ -14,14 +14,16 @@ interface Message {
 
 interface ImageChatSidebarProps {
   imageSrc?: string;
+  onImageReplaced?: (imageUrl: string | null) => void;
+  onClose?: () => void;
 }
 
-export function ImageChatSidebar({ imageSrc }: ImageChatSidebarProps) {
+export function ImageChatSidebar({ imageSrc, onImageReplaced, onClose }: ImageChatSidebarProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
       role: "assistant",
-      content: "Hello! I can help you analyze this image. What would you like to know?",
+      content: "Hello! I can help you redefine this intersection. Describe how you'd like to improve it, and I'll generate a new image showing your vision.",
       timestamp: new Date(),
     },
   ]);
@@ -39,7 +41,7 @@ export function ImageChatSidebar({ imageSrc }: ImageChatSidebarProps) {
   }, [messages]);
 
   const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading || !imageSrc) return;
 
     const userMessage: Message = {
       id: `user-${Date.now()}`,
@@ -49,20 +51,66 @@ export function ImageChatSidebar({ imageSrc }: ImageChatSidebarProps) {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    const currentInput = input.trim();
     setInput("");
     setIsLoading(true);
 
-    // Simulate AI response (replace with actual API call)
-    setTimeout(() => {
+    try {
+      // Handle data URLs, absolute URLs, and relative URLs
+      let imageUrl: string;
+      if (imageSrc.startsWith("data:")) {
+        // Data URL (base64) - use as is
+        imageUrl = imageSrc;
+      } else if (imageSrc.startsWith("http")) {
+        // Absolute URL - use as is
+        imageUrl = imageSrc;
+      } else {
+        // Relative URL - convert to absolute
+        imageUrl = `${window.location.origin}${imageSrc}`;
+      }
+
+      const response = await fetch("/api/image-generation", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt: currentInput,
+          imageUrl: imageUrl,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to generate image");
+      }
+
+      const data = await response.json();
+
+      // Replace the image on screen instead of showing in chat
+      if (data.image && onImageReplaced) {
+        onImageReplaced(data.image);
+      }
+
       const assistantMessage: Message = {
         id: `assistant-${Date.now()}`,
         role: "assistant",
-        content: "I understand you're asking about this image. This is a placeholder response. In a real implementation, this would connect to an AI service to analyze the image.",
+        content: data.text || "I've generated a new image and replaced the street view. You can use the undo button to restore the original.",
         timestamp: new Date(),
       };
+
       setMessages((prev) => [...prev, assistantMessage]);
+    } catch (error) {
+      const errorMessage: Message = {
+        id: `assistant-${Date.now()}`,
+        role: "assistant",
+        content: `Sorry, I encountered an error: ${error instanceof Error ? error.message : "Unknown error"}`,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -86,14 +134,20 @@ export function ImageChatSidebar({ imageSrc }: ImageChatSidebarProps) {
     >
       {/* Header */}
       <div className="px-4 py-3 border-b border-zinc-800 bg-zinc-900/50">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-            <Bot className="h-4 w-4 text-primary" />
-          </div>
+        <div className="flex items-center justify-between gap-2">
           <div>
-            <h3 className="text-sm font-semibold text-white">AI Assistant</h3>
-            <p className="text-xs text-zinc-400">Image Analysis</p>
+            <h3 className="text-sm font-semibold text-white">AI Agent</h3>
+            <p className="text-xs text-zinc-400">Redefine this Intersection</p>
           </div>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="rounded-lg p-1.5 hover:bg-zinc-800 transition-colors"
+              title="Close"
+            >
+              <X className="h-4 w-4 text-zinc-400" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -111,20 +165,6 @@ export function ImageChatSidebar({ imageSrc }: ImageChatSidebarProps) {
                 message.role === "user" ? "flex-row-reverse" : "flex-row"
               )}
             >
-              <div
-                className={cn(
-                  "w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0",
-                  message.role === "user"
-                    ? "bg-primary/20"
-                    : "bg-zinc-800"
-                )}
-              >
-                {message.role === "user" ? (
-                  <User className="h-4 w-4 text-primary" />
-                ) : (
-                  <Bot className="h-4 w-4 text-zinc-400" />
-                )}
-              </div>
               <div
                 className={cn(
                   "flex-1 max-w-[80%]",
@@ -160,9 +200,6 @@ export function ImageChatSidebar({ imageSrc }: ImageChatSidebarProps) {
             animate={{ opacity: 1, y: 0 }}
             className="flex gap-3"
           >
-            <div className="w-7 h-7 rounded-full bg-zinc-800 flex items-center justify-center flex-shrink-0">
-              <Bot className="h-4 w-4 text-zinc-400" />
-            </div>
             <div className="flex-1">
               <div className="bg-zinc-800 rounded-lg px-3 py-2 text-sm">
                 <div className="flex items-center gap-2">
@@ -185,7 +222,7 @@ export function ImageChatSidebar({ imageSrc }: ImageChatSidebarProps) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask about this image..."
+            placeholder={imageSrc ? "Describe how to redefine this intersection..." : "No image available"}
             className="flex-1 resize-none rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent max-h-32"
             rows={1}
             style={{
@@ -195,10 +232,10 @@ export function ImageChatSidebar({ imageSrc }: ImageChatSidebarProps) {
           />
           <button
             onClick={handleSend}
-            disabled={!input.trim() || isLoading}
+            disabled={!input.trim() || isLoading || !imageSrc}
             className={cn(
               "w-10 h-10 rounded-lg flex items-center justify-center transition-colors",
-              input.trim() && !isLoading
+              input.trim() && !isLoading && imageSrc
                 ? "bg-primary text-white hover:bg-primary/90"
                 : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
             )}
