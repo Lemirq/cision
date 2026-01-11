@@ -13,6 +13,7 @@ interface ClusterEntry {
   pedestrian_count: number;
   address: string;
   intersection: string;
+  severity_score?: number;
 }
 
 interface LeaderboardRow {
@@ -24,6 +25,7 @@ interface LeaderboardRow {
   fatal_count: number;
   cyclist_count: number;
   pedestrian_count: number;
+  severity_score: number;
 }
 
 const cached: {
@@ -39,17 +41,33 @@ const cached: {
   },
 };
 
+// Clear cache function for development (can be called via API if needed)
+function clearCache() {
+  cached.loaded = false;
+  cached.byMetric = {
+    total: [],
+    fatal: [],
+    cyclist: [],
+    pedestrian: [],
+  };
+}
+
 function toRows(data: ClusterEntry[]): LeaderboardRow[] {
-  return data.map((c) => ({
-    id: c.id,
-    name: c.intersection || c.address,
-    address: c.address,
-    centroid: c.centroid,
-    total_count: c.total_count ?? 0,
-    fatal_count: c.fatal_count ?? 0,
-    cyclist_count: c.cyclist_count ?? 0,
-    pedestrian_count: c.pedestrian_count ?? 0,
-  }));
+  return data.map((c) => {
+    // Extract severity_score - handle both the typed field and any untyped data
+    const severityScore = (c as any).severity_score ?? c.severity_score ?? 0;
+    return {
+      id: c.id,
+      name: c.intersection || c.address,
+      address: c.address,
+      centroid: c.centroid,
+      total_count: c.total_count ?? 0,
+      fatal_count: c.fatal_count ?? 0,
+      cyclist_count: c.cyclist_count ?? 0,
+      pedestrian_count: c.pedestrian_count ?? 0,
+      severity_score: severityScore,
+    };
+  });
 }
 
 function sortByMetric(rows: LeaderboardRow[], metric: Metric): LeaderboardRow[] {

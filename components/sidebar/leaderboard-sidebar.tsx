@@ -38,6 +38,7 @@ export function LeaderboardSidebar({
       fatal_count: number;
       cyclist_count: number;
       pedestrian_count: number;
+      severity_score: number;
     }>
   >([]);
   const [loading, setLoading] = useState(false);
@@ -76,7 +77,7 @@ export function LeaderboardSidebar({
         setLoading(true);
         setError(null);
         const res = await fetch(`/api/leaderboard?metric=${metric}&page=${page}&pageSize=${pageSize}`, {
-          cache: "force-cache",
+          cache: "no-store",
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
@@ -121,7 +122,7 @@ export function LeaderboardSidebar({
         id: r.id,
         centroid: r.centroid,
         collisions: [],
-        severity_score: 0,
+        severity_score: r.severity_score ?? 0,
         total_count: r.total_count,
         fatal_count: r.fatal_count,
         cyclist_count: r.cyclist_count,
@@ -230,7 +231,7 @@ export function LeaderboardSidebar({
                       id: h.id,
                       centroid: h.centroid,
                       collisions: [],
-                      severity_score: h.severity_score || 0,
+                      severity_score: h.severity_score ?? 0,
                       total_count: h.total_count,
                       fatal_count: h.fatal_count,
                       cyclist_count: h.cyclist_count,
