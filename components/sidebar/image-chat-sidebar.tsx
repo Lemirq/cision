@@ -296,11 +296,11 @@ export function ImageChatSidebar({
             
             // Find completed tool calls (output-available) to display separately
             const completedToolParts = toolParts.filter(
-              (part) => part.state === "output-available"
+              (part) => part.type === "tool-generateImage" && "state" in part && part.state === "output-available"
             );
             // Find in-progress tool calls to display in bubble
             const inProgressToolParts = toolParts.filter(
-              (part) => part.state !== "output-available" && part.state !== "output-error"
+              (part) => part.type === "tool-generateImage" && "state" in part && part.state !== "output-available" && part.state !== "output-error"
             );
             
             return (
