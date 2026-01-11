@@ -251,23 +251,13 @@ export function PersonaSidebar() {
   const isRinging = connectionStatus === "ringing";
   const isConnecting = connectionStatus === "connecting";
   const isCallInProgress = isRinging || isConnecting || isConnected;
-  const personaOpen = useMapStore((s) => s.personaOpen);
-  const setPersonaOpen = useMapStore((s) => s.setPersonaOpen);
 
   return (
     <motion.aside
-      initial={{ x: -320 }}
-      animate={{ x: personaOpen ? 0 : -320 }}
-      transition={{ type: "spring", damping: 25, stiffness: 200 }}
+      initial={{ x: 0 }}
+      animate={{ x: 0 }}
       className="fixed left-16 top-0 z-40 h-screen w-80 border-r border-zinc-800 bg-zinc-950 flex flex-col"
     >
-      <button
-        aria-label="Close left panel"
-        className="absolute top-2 right-0 text-zinc-400 hover:text-white px-2"
-        onClick={() => setPersonaOpen(false)}
-      >
-        {"<<"}
-      </button>
       <AnimatePresence mode="wait">
         {currentView === "list" ? (
           <motion.div

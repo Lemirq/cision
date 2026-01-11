@@ -10,6 +10,8 @@ export default function HomePage() {
 
   useEffect(() => {
     setMounted(true)
+    // Always use dark theme for this landing page
+    document.documentElement.classList.add("dark")
   }, [])
 
   useEffect(() => {
@@ -101,7 +103,7 @@ export default function HomePage() {
             className="opacity-40 w-full h-full flex items-center justify-center"
             dangerouslySetInnerHTML={{ __html: svgContent }}
             style={{
-              transform: "translateY(-20%) scale(1.8)",
+              transform: "scale(1.8)",
             }}
           />
         )}
@@ -109,7 +111,15 @@ export default function HomePage() {
 
       {/* Hero Content */}
       <main className="relative z-10 flex flex-col items-center justify-center min-h-[calc(100vh-88px)] px-4 text-center">
-        
+        {/* Badge */}
+        <div className="mb-6 px-4 py-2 rounded-full border border-white/20 bg-white/5 backdrop-blur-sm">
+          <span className="text-white/80 text-sm">
+            Latest update
+            <span className="mx-2 text-white/40">|</span>
+            AI-Powered Urban Planning Is Here!
+            <ArrowRight className="inline-block w-4 h-4 ml-2 text-white/60" />
+          </span>
+        </div>
 
         {/* Headline */}
         <h1 className="font-mono text-6xl md:text-7xl lg:text-8xl text-white mb-6 tracking-tight text-balance">
@@ -140,18 +150,21 @@ export default function HomePage() {
             titleComponent={
               <>
                 <h1 className="text-4xl font-semibold text-white text-center">
-                 AI-Powered <br />
+                  Unleash the power of <br />
                   <span className="text-4xl md:text-[6rem] font-bold mt-1 leading-none">
-                  Urban Planning
+                    Scroll Animations
                   </span>
                 </h1>
               </>
             }
           >
-            <iframe
-              src="/map"
-              title="Cision Map Preview"
-              className="mx-auto rounded-xl border border-zinc-800 w-[1400px] h-[720px] bg-zinc-900 pointer-events-none"
+            <img
+              src={"/map-dark.svg"}
+              alt="Cision map preview"
+              height={720}
+              width={1400}
+              className="mx-auto object-cover h-full object-left-top"
+              draggable={false}
             />
           </ContainerScroll>
         </div>
