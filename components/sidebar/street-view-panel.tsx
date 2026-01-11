@@ -16,7 +16,15 @@ interface StreetViewPanelProps {
   replacedImageUrl?: string | null; // Generated image to replace the street view
 }
 
-export function StreetViewPanel({ lat, lng, date, hour, year, month, replacedImageUrl }: StreetViewPanelProps) {
+export function StreetViewPanel({
+  lat,
+  lng,
+  date,
+  hour,
+  year,
+  month,
+  replacedImageUrl,
+}: StreetViewPanelProps) {
   const [heading, setHeading] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -44,13 +52,13 @@ export function StreetViewPanel({ lat, lng, date, hour, year, month, replacedIma
         return date;
       }
     }
-    
+
     // Fall back to constructing from year and month
     if (year && month) {
       const monthNum = month.padStart(2, "0");
       return `${year}-${monthNum}`;
     }
-    
+
     return "";
   };
 
@@ -93,7 +101,9 @@ export function StreetViewPanel({ lat, lng, date, hour, year, month, replacedIma
   const handleExpand = (e: React.MouseEvent) => {
     e.stopPropagation();
     // Find and click the image element to open PhotoView
-    const imgElement = document.querySelector(`img[src="${displayUrl}"]`) as HTMLImageElement;
+    const imgElement = document.querySelector(
+      `img[src="${displayUrl}"]`
+    ) as HTMLImageElement;
     if (imgElement) {
       imgElement.click();
     }
@@ -105,7 +115,7 @@ export function StreetViewPanel({ lat, lng, date, hour, year, month, replacedIma
   };
 
   return (
-    <div className="relative overflow-hidden rounded-lg">
+    <div className="relative overflow-hidden">
       {isLoading && !hasError && (
         <div className="absolute inset-0 bg-zinc-800 animate-pulse z-10" />
       )}
@@ -124,7 +134,9 @@ export function StreetViewPanel({ lat, lng, date, hour, year, month, replacedIma
               src={displayUrl}
               alt={replacedImageUrl ? "Redesigned Intersection" : "Street View"}
               className={`w-full h-64 object-cover cursor-pointer ${
-                replacedImageUrl ? "animate-in fade-in zoom-in duration-500" : ""
+                replacedImageUrl
+                  ? "animate-in fade-in zoom-in duration-500"
+                  : ""
               }`}
               onLoad={() => setIsLoading(false)}
               onError={handleImageError}
@@ -134,7 +146,7 @@ export function StreetViewPanel({ lat, lng, date, hour, year, month, replacedIma
               }}
             />
           </PhotoView>
-          
+
           {/* Shine effect overlay */}
           <AnimatePresence>
             {showShine && replacedImageUrl && (
@@ -148,7 +160,8 @@ export function StreetViewPanel({ lat, lng, date, hour, year, month, replacedIma
                   ease: "easeInOut",
                 }}
                 style={{
-                  background: "linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%)",
+                  background:
+                    "linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%)",
                   transform: "skewX(-20deg)",
                 }}
               />

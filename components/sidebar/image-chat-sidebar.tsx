@@ -8,13 +8,11 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, lastAssistantMessageIsCompleteWithToolCalls } from "ai";
 import {
   getClusterData,
-  getClusterContext,
   getFullSafetyAuditContext,
-  addImageVersion,
   getInfrastructureGaps,
   saveClusterData,
+  addImageVersion,
 } from "@/lib/cluster-storage";
-import { useMapStore } from "@/stores/map-store";
 
 interface ImageChatSidebarProps {
   imageSrc?: string;
@@ -117,10 +115,15 @@ export function ImageChatSidebar({
 
   // Track processed tool calls to prevent infinite loops
   const processedToolCallsRef = useRef<Set<string>>(new Set());
+  const lastProcessedMessageIdRef = useRef<string | null>(null);
 
   // Watch for tool completion and trigger image replacement + save to storage
   useEffect(() => {
     const lastMessage = messages[messages.length - 1];
+    if (!lastMessage || lastMessage.id === lastProcessedMessageIdRef.current) {
+      return;
+    }
+
     if (lastMessage?.role === "assistant") {
       for (const part of lastMessage.parts || []) {
         if (part.type === "tool-generateImage" && part.state === "output-available") {
@@ -142,6 +145,7 @@ export function ImageChatSidebar({
           if (output.success && output.image && onImageReplaced) {
             // Mark as processed IMMEDIATELY before any state updates to prevent loops
             processedToolCallsRef.current.add(toolCallId);
+            lastProcessedMessageIdRef.current = lastMessage.id;
             
             // Call onImageReplaced directly - it's now memoized
             onImageReplaced(output.image);
@@ -153,7 +157,8 @@ export function ImageChatSidebar({
                 .slice()
                 .reverse()
                 .find((msg) => msg.role === "user");
-              const prompt = userMessage?.text || "";
+              // Extract text from message parts
+              const prompt = userMessage?.parts?.find((p) => p.type === "text")?.text || "";
 
               // Get current image as parent
               const clusterData = getClusterData(clusterId);
@@ -197,6 +202,12 @@ export function ImageChatSidebar({
     }
     previousImageRef.current = imageSrc;
   }, [imageSrc, clusterId]);
+
+  // Reset processed tool calls when imageSrc changes
+  useEffect(() => {
+    processedToolCallsRef.current.clear();
+    lastProcessedMessageIdRef.current = null;
+  }, [imageSrc]);
 
   const handleSend = () => {
     if (!input.trim() || isLoading || !imageSrc) return;
@@ -424,7 +435,7 @@ export function ImageChatSidebar({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={imageSrc ? "Describe how to redefine this intersection..." : "No image available"}
+            placeholder={imageSrc ? "Write your changes..." : "No image available"}
             className="flex-1 resize-none rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent max-h-32"
             rows={1}
             style={{

@@ -343,7 +343,7 @@ export function CityMap({ hotspots = [] }: CityMapProps) {
   return (
     <div className="relative w-full h-full">
       {/* Debug toggle button */}
-      <div className="absolute top-4 right-4 z-10">
+      {/* <div className="absolute top-4 right-4 z-10">
         <Button
           variant={showDebugView ? "default" : "outline"}
           size="sm"
@@ -352,7 +352,7 @@ export function CityMap({ hotspots = [] }: CityMapProps) {
         >
           {showDebugView ? "Hide" : "Show"} Debug View
         </Button>
-      </div>
+      </div> */}
 
       <Map
         ref={mapRef}
