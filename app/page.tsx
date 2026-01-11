@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react"
 import { ArrowRight } from "lucide-react"
 import { ContainerScroll } from "@/components/ui/container-scroll-animation"
+import Image from "next/image"
+import Link from "next/link"
 
 export default function HomePage() {
   const [svgContent, setSvgContent] = useState<string>("")
@@ -16,7 +18,9 @@ export default function HomePage() {
     const loadSVG = async () => {
       try {
         const response = await fetch("/map-dark.svg")
-        const svgText = await response.text()
+        let svgText = await response.text()
+        // Replace teal dots (#0C9784) with red (#ef4444)
+        svgText = svgText.replace(/#0C9784/g, "#ef4444")
         setSvgContent(svgText)
       } catch (error) {
         console.error("Failed to load SVG:", error)
@@ -38,6 +42,12 @@ export default function HomePage() {
           const delay = Math.random() * 1
 
           rect.setAttribute("style", `animation: glimmer ${duration}s ease-in-out ${delay}s infinite alternate;`)
+          
+          // Replace teal dots (#0C9784) with red
+          const fillColor = rect.getAttribute("fill")
+          if (fillColor === "#0C9784") {
+            rect.setAttribute("fill", "#ef4444") // red-500
+          }
         })
 
         const style = document.createElement("style")
@@ -63,12 +73,17 @@ export default function HomePage() {
       {/* Navigation */}
       <nav className="relative z-20 flex items-center justify-between px-8 py-6">
         {/* Logo */}
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-white rounded-md flex items-center justify-center">
-            <span className="text-black font-bold text-sm">C</span>
-          </div>
+        <Link href="/" aria-label="Go to homepage" className="flex items-center gap-2">
+          <Image
+            src="/Logo.svg"
+            alt="Cision logo"
+            width={32}
+            height={32}
+            className="w-8 h-8"
+            priority
+          />
           <span className="text-white font-semibold text-lg">Cision</span>
-        </div>
+        </Link>
 
         {/* Nav Links */}
         <div className="hidden md:flex items-center gap-8">
