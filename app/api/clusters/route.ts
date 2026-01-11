@@ -1,117 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import { createHash } from "crypto";
-import clientPromise from "@/lib/mongodb";
-import { clusterCollisions } from "@/lib/clustering";
-import type { CollisionPoint, ClusteredHotspot } from "@/types/collision";
+import { readFileSync } from "fs";
+import { join } from "path";
+import type { ClusteredHotspot } from "@/types/collision";
 
 // Next.js 16: Route segment config
 export const dynamic = 'force-dynamic';
 
-interface CollisionDocument {
-  OBJECTID: string;
-  EVENT_UNIQUE_ID: string;
-  OCC_DATE: string;
-  OCC_MONTH: string;
-  OCC_DOW: string;
-  OCC_YEAR: string;
-  OCC_HOUR: string;
-  DIVISION: string;
-  FATALITIES: string;
-  INJURY_COLLISIONS: string;
-  FTR_COLLISIONS: string;
-  PD_COLLISIONS: string;
-  HOOD_158: string;
-  NEIGHBOURHOOD_158: string;
-  LONG_WGS84: string;
-  LAT_WGS84: string;
-  AUTOMOBILE: string;
-  MOTORCYCLE: string;
-  PASSENGER: string;
-  BICYCLE: string;
-  PEDESTRIAN: string;
-  x?: string;
-  y?: string;
-}
-
-// Convert MongoDB documents to CollisionPoint format
-function convertToCollisionPoints(collisions: CollisionDocument[]): CollisionPoint[] {
-  return collisions
-    .filter((collision) => {
-      const lat = parseFloat(collision.LAT_WGS84);
-      const lng = parseFloat(collision.LONG_WGS84);
-      return !isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
-    })
-    .map((collision) => {
-      const lat = parseFloat(collision.LAT_WGS84);
-      const lng = parseFloat(collision.LONG_WGS84);
-      
-      let weight = 1;
-      if (collision.FATALITIES === "1" || collision.FATALITIES === "2") {
-        weight = 3;
-      } else if (collision.INJURY_COLLISIONS === "YES") {
-        weight = 2;
-      }
-
-      return {
-        id: collision.EVENT_UNIQUE_ID || collision.OBJECTID,
-        objectId: collision.OBJECTID,
-        eventId: collision.EVENT_UNIQUE_ID,
-        lat,
-        lng,
-        date: collision.OCC_DATE,
-        month: collision.OCC_MONTH,
-        dayOfWeek: collision.OCC_DOW,
-        year: collision.OCC_YEAR,
-        hour: collision.OCC_HOUR,
-        division: collision.DIVISION,
-        fatalities: parseInt(collision.FATALITIES) || 0,
-        injuryCollisions: collision.INJURY_COLLISIONS === "YES",
-        ftrCollisions: collision.FTR_COLLISIONS === "YES",
-        pdCollisions: collision.PD_COLLISIONS === "YES",
-        neighbourhood: collision.NEIGHBOURHOOD_158,
-        hood: collision.HOOD_158,
-        automobile: collision.AUTOMOBILE === "YES",
-        motorcycle: collision.MOTORCYCLE === "YES",
-        passenger: collision.PASSENGER === "YES",
-        bicycle: collision.BICYCLE === "YES",
-        pedestrian: collision.PEDESTRIAN === "YES",
-        weight,
-      };
-    });
-}
-
-// Fetch collisions and cluster them
-async function fetchAndClusterCollisions(limit: number, skip: number): Promise<ClusteredHotspot[]> {
-  const client = await clientPromise;
-  const db = client.db("data");
-  const collection = db.collection<CollisionDocument>("collisions_2025");
-
-  // Fetch collisions with valid coordinates
-  const collisions = await collection
-    .find({
-      LAT_WGS84: { $exists: true, $ne: "" },
-      LONG_WGS84: { $exists: true, $ne: "" },
-    })
-    .skip(skip)
-    .limit(limit)
-    .toArray();
-
-  // Convert to CollisionPoint format
-  const collisionPoints = convertToCollisionPoints(collisions);
-
-  // Cluster the collisions
-  const clusters = clusterCollisions(collisionPoints);
-
+// Fetch pre-computed clusters from JSON file
+async function fetchPrecomputedClusters(): Promise<ClusteredHotspot[]> {
+  const filePath = join(process.cwd(), "data", "clusters.json");
+  const fileContent = readFileSync(filePath, "utf-8");
+  const clusters: ClusteredHotspot[] = JSON.parse(fileContent);
   return clusters;
 }
 
-// Cache clusters (7 days)
+// Cache clusters (7 days) - reads from JSON file
 const getCachedClusters = unstable_cache(
-  async (limit: number, skip: number) => {
-    return fetchAndClusterCollisions(limit, skip);
+  async () => {
+    return fetchPrecomputedClusters();
   },
-  ["clusters-data"],
+  ["precomputed-clusters-json"],
   {
     revalidate: 604800, // 7 days
     tags: ["clusters"],
@@ -120,12 +30,11 @@ const getCachedClusters = unstable_cache(
 
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const limit = parseInt(searchParams.get("limit") || "147888");
-    const skip = parseInt(searchParams.get("skip") || "0");
+    // Note: limit and skip are ignored now since we fetch pre-computed clusters
+    // All clusters are pre-computed and stored in the JSON file
     
-    // Get cached clusters
-    const clusters = await getCachedClusters(limit, skip);
+    // Get cached pre-computed clusters
+    const clusters = await getCachedClusters();
 
     // Generate ETag for client-side caching validation
     const dataString = JSON.stringify(clusters);

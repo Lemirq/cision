@@ -32,71 +32,64 @@ export function CityMap({ hotspots = [] }: CityMapProps) {
     selectedCollision,
   } = useMapStore();
   const mapRef = useRef<MapRef>(null);
-  const [collisionsData, setCollisionsData] = useState<any>(null);
   const [clusteredHotspots, setClusteredHotspots] = useState<
     ClusteredHotspot[]
   >([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showDebugView, setShowDebugView] = useState(true); // Toggle for debug visualization
+  const [showDebugView, setShowDebugView] = useState(false); // Toggle for debug visualization
 
-  // Fetch collisions from MongoDB on mount (for heatmap)
-  useEffect(() => {
-    const fetchCollisions = async () => {
-      try {
-        setIsLoading(true);
-        console.log("[CityMap] Fetching collisions from API...");
-        const startTime = Date.now();
-        
-        const response = await fetch("/api/collisions?limit=147888"); // Fetch all collisions
-        
-        const fetchTime = Date.now() - startTime;
-        console.log(`[CityMap] Fetch completed in ${fetchTime}ms, status: ${response.status}`);
-        
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.message || `Failed to fetch collisions: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        const parseTime = Date.now() - startTime;
-        console.log(`[CityMap] Data parsed in ${parseTime}ms, received ${data.features?.length || 0} features`);
-        
-        setCollisionsData(data);
-      } catch (error) {
-        console.error("[CityMap] Error fetching collisions:", error);
-        if (error instanceof Error) {
-          console.error("[CityMap] Error message:", error.message);
-          console.error("[CityMap] Error stack:", error.stack);
-        }
-      } finally {
-        setIsLoading(false);
-      }
+  // Convert clusters to GeoJSON format for heatmap
+  const clustersToGeoJSON = (clusters: ClusteredHotspot[]) => {
+    return {
+      type: "FeatureCollection" as const,
+      features: clusters.map((cluster) => ({
+        type: "Feature" as const,
+        geometry: {
+          type: "Point" as const,
+          coordinates: [cluster.centroid.lng, cluster.centroid.lat] as [
+            number,
+            number,
+          ],
+        },
+        properties: {
+          id: cluster.id,
+          weight: Math.min(cluster.total_count / 10, 3), // Normalize weight: 0-3 scale based on total_count
+          total_count: cluster.total_count,
+          severity_score: cluster.severity_score,
+          fatal_count: cluster.fatal_count,
+        },
+      })),
     };
+  };
 
-    fetchCollisions();
-  }, []);
-
-  // Fetch clustered hotspots
+  // Fetch clustered hotspots (used for both heatmap and cluster visualization)
   useEffect(() => {
     const fetchClusters = async () => {
       try {
+        setIsLoading(true);
         console.log("[CityMap] Fetching clusters from API...");
         const startTime = Date.now();
-        
-        const response = await fetch("/api/clusters?limit=147888");
-        
+
+        const response = await fetch("/api/clusters");
+
         const fetchTime = Date.now() - startTime;
-        console.log(`[CityMap] Clusters fetch completed in ${fetchTime}ms, status: ${response.status}`);
-        
+        console.log(
+          `[CityMap] Clusters fetch completed in ${fetchTime}ms, status: ${response.status}`
+        );
+
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.message || `Failed to fetch clusters: ${response.status}`);
+          throw new Error(
+            errorData.message || `Failed to fetch clusters: ${response.status}`
+          );
         }
-        
+
         const clusters = await response.json();
         const parseTime = Date.now() - startTime;
-        console.log(`[CityMap] Clusters parsed in ${parseTime}ms, received ${clusters.length} clusters`);
-        
+        console.log(
+          `[CityMap] Clusters parsed in ${parseTime}ms, received ${clusters.length} clusters`
+        );
+
         setClusteredHotspots(clusters);
 
         // Debug: Log cluster data to verify collisions are included
@@ -115,6 +108,8 @@ export function CityMap({ hotspots = [] }: CityMapProps) {
           console.error("[CityMap] Error message:", error.message);
           console.error("[CityMap] Error stack:", error.stack);
         }
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -189,49 +184,26 @@ export function CityMap({ hotspots = [] }: CityMapProps) {
         }
       }
     }
-    // Check if it's a collision point (individual collision)
-    else if (feature.source === "collisions") {
-      const properties = feature.properties;
-      if (properties && properties.lat && properties.lng) {
-        const collisionPoint: CollisionPoint = {
-          id: properties.id || properties.eventId || properties.objectId,
-          objectId: properties.objectId || "",
-          eventId: properties.eventId || "",
-          lat: properties.lat,
-          lng: properties.lng,
-          date: properties.date || "",
-          month: properties.month || "",
-          dayOfWeek: properties.dayOfWeek || "",
-          year: properties.year || "",
-          hour: properties.hour || "",
-          division: properties.division || "",
-          fatalities: properties.fatalities || 0,
-          injuryCollisions: properties.injuryCollisions || false,
-          ftrCollisions: properties.ftrCollisions || false,
-          pdCollisions: properties.pdCollisions || false,
-          neighbourhood: properties.neighbourhood || "",
-          hood: properties.hood || "",
-          automobile: properties.automobile || false,
-          motorcycle: properties.motorcycle || false,
-          passenger: properties.passenger || false,
-          bicycle: properties.bicycle || false,
-          pedestrian: properties.pedestrian || false,
-          weight: properties.weight || 1,
-        };
-
-        selectCollision(collisionPoint);
-
-        // Fetch Google Maps place information
-        try {
-          const placeResponse = await fetch(
-            `/api/places?lat=${collisionPoint.lat}&lng=${collisionPoint.lng}`
-          );
-          if (placeResponse.ok) {
-            const placeData: PlaceInfo = await placeResponse.json();
-            setPlaceInfo(placeData);
+    // Check if it's a cluster from the heatmap (clusters-heatmap source)
+    else if (feature.source === "clusters-heatmap") {
+      const clusterId = feature.properties?.id;
+      if (clusterId) {
+        const hotspot = clusteredHotspots.find((h) => h.id === clusterId);
+        if (hotspot) {
+          selectHotspot(hotspot);
+          // Fetch place info for the cluster centroid
+          try {
+            const placeResponse = await fetch(
+              `/api/places?lat=${hotspot.centroid.lat}&lng=${hotspot.centroid.lng}`
+            );
+            if (placeResponse.ok) {
+              const placeData: PlaceInfo = await placeResponse.json();
+              setPlaceInfo(placeData);
+            }
+          } catch (error) {
+            console.error("Error fetching place information:", error);
           }
-        } catch (error) {
-          console.error("Error fetching place information:", error);
+          return;
         }
       }
     }
@@ -384,21 +356,13 @@ export function CityMap({ hotspots = [] }: CityMapProps) {
         {...viewport}
         onMove={(evt) => setViewport(evt.viewState)}
         onClick={handleMapClick}
-        interactiveLayerIds={
-          collisionsData
-            ? [
-                "collisions-heat",
-                "collisions-point",
-                "cluster-circles",
-                "hotspot-circles",
-                ...(showDebugView ? ["debug-cluster-points-layer"] : []),
-              ]
-            : [
-                "cluster-circles",
-                "hotspot-circles",
-                ...(showDebugView ? ["debug-cluster-points-layer"] : []),
-              ]
-        }
+        interactiveLayerIds={[
+          "clusters-heat",
+          "clusters-point",
+          "cluster-circles",
+          "hotspot-circles",
+          ...(showDebugView ? ["debug-cluster-points-layer"] : []),
+        ]}
         mapStyle={MAP_CONFIG.MAPBOX_STYLE}
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
         style={{ width: "100%", height: "100%" }}
@@ -437,16 +401,20 @@ export function CityMap({ hotspots = [] }: CityMapProps) {
           }}
         />
 
-        {/* Heatmap layer for collisions */}
-        {collisionsData && (
-          <Source id="collisions" type="geojson" data={collisionsData}>
+        {/* Heatmap layer for clusters */}
+        {clusteredHotspots.length > 0 && (
+          <Source
+            id="clusters-heatmap"
+            type="geojson"
+            data={clustersToGeoJSON(clusteredHotspots)}
+          >
             <Layer
-              id="collisions-heat"
+              id="clusters-heat"
               type="heatmap"
               maxzoom={12}
               slot="top"
               paint={{
-                // Increase the heatmap weight based on frequency and property weight
+                // Increase the heatmap weight based on cluster total_count (normalized to weight)
                 "heatmap-weight": [
                   "interpolate",
                   ["linear"],
@@ -524,32 +492,40 @@ export function CityMap({ hotspots = [] }: CityMapProps) {
               }}
             />
             <Layer
-              id="collisions-point"
+              id="clusters-point"
               type="circle"
               minzoom={11}
               paint={{
-                // Size circle radius by weight and zoom level - only show at high zoom
+                // Size circle radius by weight (total_count) and zoom level - only show at high zoom
                 "circle-radius": [
                   "interpolate",
                   ["linear"],
                   ["zoom"],
                   11,
-                  ["interpolate", ["linear"], ["get", "weight"], 1, 3, 3, 8],
+                  ["interpolate", ["linear"], ["get", "weight"], 0.5, 4, 3, 10],
                   16,
-                  ["interpolate", ["linear"], ["get", "weight"], 1, 8, 3, 25],
+                  [
+                    "interpolate",
+                    ["linear"],
+                    ["get", "weight"],
+                    0.5,
+                    10,
+                    3,
+                    30,
+                  ],
                 ],
                 "circle-emissive-strength": 0.75,
-                // Color circle by weight (severity) - matching heatmap colors
+                // Color circle by weight (cluster size/severity) - matching heatmap colors
                 "circle-color": [
                   "interpolate",
                   ["linear"],
                   ["get", "weight"],
-                  1,
-                  "rgba(0,200,255,0.9)", // Cyan-blue for low severity
-                  2,
-                  "rgba(255,200,0,0.95)", // Orange for medium severity
+                  0.5,
+                  "rgba(0,200,255,0.9)", // Cyan-blue for small clusters
+                  1.5,
+                  "rgba(255,200,0,0.95)", // Orange for medium clusters
                   3,
-                  "rgba(255,0,0,1)", // Red for high severity (fatalities)
+                  "rgba(255,0,0,1)", // Red for large clusters
                 ],
                 "circle-stroke-color": "rgba(255,255,255,0.8)",
                 "circle-stroke-width": 1.5,

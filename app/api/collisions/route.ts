@@ -42,12 +42,10 @@ async function fetchCollisionsData(limit: number, skip: number) {
   const db = client.db("data");
   const collection = db.collection<CollisionDocument>("collisions_2025");
 
-  // Fetch collisions with valid coordinates
+  // Fetch collisions - all documents have valid coordinates, so no filter needed
+  // Removing $ne: "" filter significantly improves performance (can't use indexes)
   const collisions = await collection
-    .find({
-      LAT_WGS84: { $exists: true, $ne: "" },
-      LONG_WGS84: { $exists: true, $ne: "" },
-    })
+    .find({})
     .skip(skip)
     .limit(limit)
     .toArray();
