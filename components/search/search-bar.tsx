@@ -269,104 +269,104 @@ export function SearchBar({ hotspots }: SearchBarProps) {
               transition={{ duration: 0.2 }}
               className="absolute top-full mt-2 w-full bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl overflow-hidden z-50 max-h-80 overflow-y-auto"
             >
-            {results.length === 0 && isLoadingPlaces ? (
-              <div className="px-4 py-6 text-center text-zinc-400 text-sm">
-                <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />
-                Searching...
-              </div>
-            ) : (
-              <>
-                {intersectionResults.length > 0 && (
-                  <>
-                    <div className="px-4 py-2 bg-zinc-800/50 border-b border-zinc-800">
-                      <span className="text-zinc-400 text-xs font-medium uppercase tracking-wide">
-                        Intersections
-                      </span>
-                    </div>
-                    {intersectionResults.map((result, index) => {
-                      const globalIndex = index;
-                      return (
-                        <button
-                          key={result.id}
-                          onClick={() => handleSelect(result)}
-                          onMouseEnter={() => setFocusedIndex(globalIndex)}
-                          className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-colors ${
-                            globalIndex === focusedIndex
-                              ? "bg-zinc-800"
-                              : "bg-transparent hover:bg-zinc-800/50"
-                          }`}
-                        >
-                          <MapPin className="h-4 w-4 text-blue-400 shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <div className="text-white text-sm font-medium truncate">
-                              {result.label}
-                            </div>
-                            {result.subtitle && (
-                              <div className="text-zinc-400 text-xs mt-0.5 truncate">
-                                {result.subtitle}
+              {results.length === 0 && isLoadingPlaces ? (
+                <div className="px-4 py-6 text-center text-zinc-400 text-sm">
+                  <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />
+                  Searching...
+                </div>
+              ) : (
+                <>
+                  {intersectionResults.length > 0 && (
+                    <>
+                      <div className="px-4 py-2 bg-zinc-800/50 border-b border-zinc-800">
+                        <span className="text-zinc-400 text-xs font-medium uppercase tracking-wide">
+                          Intersections
+                        </span>
+                      </div>
+                      {intersectionResults.map((result, index) => {
+                        const globalIndex = index;
+                        return (
+                          <button
+                            key={result.id}
+                            onClick={() => handleSelect(result)}
+                            onMouseEnter={() => setFocusedIndex(globalIndex)}
+                            className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-colors ${
+                              globalIndex === focusedIndex
+                                ? "bg-zinc-800"
+                                : "bg-transparent hover:bg-zinc-800/50"
+                            }`}
+                          >
+                            <MapPin className="h-4 w-4 text-blue-400 shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <div className="text-white text-sm font-medium truncate">
+                                {result.label}
                               </div>
-                            )}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </>
-                )}
-                {placeSuggestions.length > 0 && (
-                  <>
-                    {intersectionResults.length > 0 && (
-                      <div className="h-px bg-zinc-800" />
-                    )}
-                    <div className="px-4 py-2 bg-zinc-800/50 border-b border-zinc-800">
-                      <span className="text-zinc-400 text-xs font-medium uppercase tracking-wide">
-                        Google Places
-                      </span>
-                    </div>
-                    {placeSuggestions.map((prediction, index) => {
-                      const result: PlaceResult = {
-                        type: "place",
-                        id: `place-${prediction.placeId}`,
-                        label: prediction.mainText,
-                        subtitle: prediction.secondaryText,
-                        placeId: prediction.placeId,
-                      };
-                      const globalIndex = intersectionResults.length + index;
-                      return (
-                        <button
-                          key={result.id}
-                          onClick={() => handleSelect(result)}
-                          onMouseEnter={() => setFocusedIndex(globalIndex)}
-                          className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-colors ${
-                            globalIndex === focusedIndex
-                              ? "bg-zinc-800"
-                              : "bg-transparent hover:bg-zinc-800/50"
-                          }`}
-                        >
-                          <MapPin className="h-4 w-4 text-green-400 shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <div className="text-white text-sm font-medium truncate">
-                              {result.label}
+                              {result.subtitle && (
+                                <div className="text-zinc-400 text-xs mt-0.5 truncate">
+                                  {result.subtitle}
+                                </div>
+                              )}
                             </div>
-                            {result.subtitle && (
-                              <div className="text-zinc-400 text-xs mt-0.5 truncate">
-                                {result.subtitle}
-                              </div>
-                            )}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </>
-                )}
-                {results.length === 0 &&
-                  !isLoadingPlaces &&
-                  query.trim().length >= 2 && (
-                    <div className="px-4 py-6 text-center text-zinc-400 text-sm">
-                      No results found
-                    </div>
+                          </button>
+                        );
+                      })}
+                    </>
                   )}
-              </>
-            )}
+                  {placeSuggestions.length > 0 && (
+                    <>
+                      {intersectionResults.length > 0 && (
+                        <div className="h-px bg-zinc-800" />
+                      )}
+                      <div className="px-4 py-2 bg-zinc-800/50 border-b border-zinc-800">
+                        <span className="text-zinc-400 text-xs font-medium uppercase tracking-wide">
+                          Google Places
+                        </span>
+                      </div>
+                      {placeSuggestions.map((prediction, index) => {
+                        const result: PlaceResult = {
+                          type: "place",
+                          id: `place-${prediction.placeId}`,
+                          label: prediction.mainText,
+                          subtitle: prediction.secondaryText,
+                          placeId: prediction.placeId,
+                        };
+                        const globalIndex = intersectionResults.length + index;
+                        return (
+                          <button
+                            key={result.id}
+                            onClick={() => handleSelect(result)}
+                            onMouseEnter={() => setFocusedIndex(globalIndex)}
+                            className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-colors ${
+                              globalIndex === focusedIndex
+                                ? "bg-zinc-800"
+                                : "bg-transparent hover:bg-zinc-800/50"
+                            }`}
+                          >
+                            <MapPin className="h-4 w-4 text-green-400 shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <div className="text-white text-sm font-medium truncate">
+                                {result.label}
+                              </div>
+                              {result.subtitle && (
+                                <div className="text-zinc-400 text-xs mt-0.5 truncate">
+                                  {result.subtitle}
+                                </div>
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </>
+                  )}
+                  {results.length === 0 &&
+                    !isLoadingPlaces &&
+                    query.trim().length >= 2 && (
+                      <div className="px-4 py-6 text-center text-zinc-400 text-sm">
+                        No results found
+                      </div>
+                    )}
+                </>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
