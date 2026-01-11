@@ -20,17 +20,17 @@
 
 ## The Problem
 
-Every year, **1.35 million people die** in road traffic accidents globally. In Toronto alone, there are **50,000+ reported collisions annually**. The data exists—but it's trapped in spreadsheets, buried in bureaucracy, and disconnected from the planning decisions that could prevent deaths.
+Every year, **1.35 million people die** in road traffic accidents globally. In Toronto alone, there are **50,000+ reported collisions annually**. The data exists: but it's trapped in spreadsheets, buried in bureaucracy, and disconnected from the planning decisions that could prevent deaths.
 
 **City planners face three critical gaps:**
 
-1. **Data Gap**: Collision data is abstract and scattered—no visual context
+1. **Data Gap**: Collision data is abstract and scattered: no visual context
 2. **Analysis Gap**: Safety audits take months and cost thousands of dollars
 3. **Communication Gap**: Planners can't easily show stakeholders why changes matter
 
 ## Our Solution
 
-**Cision** is an AI-powered urban planning platform that transforms raw collision data into interactive 3D visualizations, instant safety audits, and stakeholder-validated redesigns—all in minutes, not months.
+**Cision** is an AI-powered urban planning platform that transforms raw collision data into interactive 3D visualizations, instant safety audits, and stakeholder-validated redesigns: all in minutes, not months.
 
 ### How It Works
 
@@ -102,13 +102,10 @@ Three AI stakeholders, powered by **ElevenLabs**, provide instant feedback:
 
 ## 🎥 Demo
 
-**Watch our 3-minute demo:** [Link to demo video]
+**Watch our 3-minute demo:** 
 
-<p align="center">
-  <a href="/yur.mov">
-    <img src="public/demo-preview.jpg" alt="Cision Demo Preview" width="600" />
-  </a>
-</p>
+[![Cision Demo](https://img.youtube.com/vi/Lu3QH05z3w4/0.jpg)](https://youtu.be/Lu3QH05z3w4)
+
 
 ---
 
@@ -228,13 +225,13 @@ NEXT_PUBLIC_GOOGLE_PLACES_API_KEY=your_google_places_key
 
 ### What Makes Cision Hackathon-Worthy
 
-1. **End-to-End AI Integration**: Not just one AI feature, but a cohesive pipeline—data → visualization → audit → redesign → stakeholder validation
+1. **End-to-End AI Integration**: Not just one AI feature, but a cohesive pipelinedata → visualization → audit → redesign → stakeholder validation
 
 2. **Real-Time Voice Agents**: ElevenLabs-powered conversations with dynamic context injection. Agents know the intersection's safety score, flaws, and suggestions in real-time.
 
 3. **Multi-Modal UX**: Combines maps, Street View, chat, voice, and image generation into a unified workflow
 
-4. **Production-Ready Code**: Built with Next.js 15, TypeScript strict mode, and proper architecture—ready to scale
+4. **Production-Ready Code**: Built with Next.js 15, TypeScript strict mode, and proper architecture: ready to scale
 
 5. **Open Data Integration**: Leverages real Toronto collision data (open data portal) for authenticity and impact
 
@@ -266,5 +263,5 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 <p align="center">
   <strong>Built with ❤️ for safer cities</strong><br />
-  Cision — Cursor for City Planning
+  Cision :  Cursor for City Planning
 </p>
