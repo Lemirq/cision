@@ -14,6 +14,8 @@ interface MapState {
   selectedCollision: CollisionPoint | null;
   placeInfo: PlaceInfo | null;
   sidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
+  toggleSidebar: () => void;
   setViewport: (viewport: Partial<MapState["viewport"]>) => void;
   selectHotspot: (hotspot: ClusteredHotspot | null) => void;
   selectCollision: (collision: CollisionPoint | null) => void;
@@ -33,6 +35,9 @@ export const useMapStore = create<MapState>((set) => ({
   selectedCollision: null,
   placeInfo: null,
   sidebarOpen: false,
+  setSidebarOpen: (open) => set({ sidebarOpen: open }),
+  toggleSidebar: () =>
+    set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   setViewport: (viewport) =>
     set((state) => ({ viewport: { ...state.viewport, ...viewport } })),
   selectHotspot: (hotspot) =>

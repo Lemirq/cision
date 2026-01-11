@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { ArrowRight } from "lucide-react"
+import { ContainerScroll } from "@/components/ui/container-scroll-animation"
 
 export default function HomePage() {
   const [svgContent, setSvgContent] = useState<string>("")
@@ -141,6 +142,33 @@ export default function HomePage() {
           <ArrowRight className="w-4 h-4" />
         </a>
       </main>
+      
+      {/* Scroll Preview Section */}
+      <section className="relative z-10 py-24 px-4">
+        <div className="flex flex-col overflow-hidden">
+          <ContainerScroll
+            titleComponent={
+              <>
+                <h1 className="text-4xl font-semibold text-white text-center">
+                  Unleash the power of <br />
+                  <span className="text-4xl md:text-[6rem] font-bold mt-1 leading-none">
+                    Scroll Animations
+                  </span>
+                </h1>
+              </>
+            }
+          >
+            <img
+              src={"/map-dark.svg"}
+              alt="Cision map preview"
+              height={720}
+              width={1400}
+              className="mx-auto object-cover h-full object-left-top"
+              draggable={false}
+            />
+          </ContainerScroll>
+        </div>
+      </section>
     </div>
   )
 }
