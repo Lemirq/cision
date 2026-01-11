@@ -93,7 +93,8 @@ export function OverviewTab({
                           if (c.year && c.month) {
                             return `${c.month} ${c.year}`;
                           }
-                          return c.date || "";
+                          // Remove time portion from date string if present
+                          return c.date ? c.date.split(" ")[0] : "";
                         })
                         .filter(Boolean)
                         .sort();
@@ -195,7 +196,13 @@ export function OverviewTab({
               <div>
                 <p className="text-xs text-zinc-500">Date</p>
                 <p className="text-sm text-white">
-                  {collision.date || `${collision.month} ${collision.year}`}
+                  {collision.date
+                    ? (() => {
+                        // Remove time portion from date string (e.g., "5/16/2025 4:00:00 AM" -> "5/16/2025")
+                        const dateOnly = collision.date.split(" ")[0];
+                        return dateOnly;
+                      })()
+                    : `${collision.month} ${collision.year}`}
                 </p>
                 {collision.dayOfWeek && (
                   <p className="text-xs text-zinc-500">{collision.dayOfWeek}</p>
