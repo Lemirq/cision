@@ -183,10 +183,18 @@ export function IntersectionSidebar() {
     selectHotspot,
     selectCollision,
   } = useMapStore();
-  const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
-  const [currentImageId, setCurrentImageId] = useState<string | null>(null);
   const isOpen = selectedHotspot !== null || selectedCollision !== null;
   const displayKey = selectedCollision?.id || selectedHotspot?.id || "none";
+  
+  // Reset state when displayKey changes using key pattern
+  const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
+  const [currentImageId, setCurrentImageId] = useState<string | null>(null);
+  
+  // Reset when switching between hotspots/collisions
+  useEffect(() => {
+    setGeneratedImages([]);
+    setCurrentImageId(null);
+  }, [displayKey]);
 
   const handleClose = () => {
     selectHotspot(null);
@@ -232,6 +240,7 @@ export function IntersectionSidebar() {
       // Always select the newest image when array changes
       setCurrentImageId(newestImage.id);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [generatedImages.length]); // Only trigger when array length changes (new image added)
 
   const handleRevert = (imageId: string) => {
@@ -261,11 +270,6 @@ export function IntersectionSidebar() {
     }
   };
 
-  // Reset generated images when switching between hotspots/collisions
-  useEffect(() => {
-    setGeneratedImages([]);
-    setCurrentImageId(null);
-  }, [displayKey]);
 
   // Get current image URL to display
   const getCurrentImageUrl = () => {

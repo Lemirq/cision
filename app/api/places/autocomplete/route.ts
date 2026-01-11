@@ -53,7 +53,16 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform predictions to a cleaner format
-    const predictions = (data.predictions || []).map((prediction: any) => ({
+    interface GooglePrediction {
+      place_id: string;
+      description: string;
+      structured_formatting?: {
+        main_text?: string;
+        secondary_text?: string;
+      };
+      types?: string[];
+    }
+    const predictions = (data.predictions || []).map((prediction: GooglePrediction) => ({
       placeId: prediction.place_id,
       description: prediction.description,
       mainText: prediction.structured_formatting?.main_text || prediction.description,
