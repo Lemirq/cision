@@ -11,11 +11,9 @@ import Map, {
 import { useMapStore } from "@/stores/map-store";
 import type {
   ClusteredHotspot,
-  CollisionPoint,
   PlaceInfo,
 } from "@/types/collision";
 import { MAP_CONFIG } from "@/lib/constants";
-import { Button } from "@/components/ui/button";
 
 interface CityMapProps {
   hotspots?: ClusteredHotspot[];
@@ -36,8 +34,8 @@ export function CityMap({ hotspots = [] }: CityMapProps) {
   const [clusteredHotspots, setClusteredHotspots] = useState<
     ClusteredHotspot[]
   >([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [showDebugView, setShowDebugView] = useState(false); // Toggle for debug visualization
+  const [_isLoading, setIsLoading] = useState(true);
+  const [showDebugView, _setShowDebugView] = useState(false); // Toggle for debug visualization
 
   // Convert clusters to GeoJSON format for heatmap
   const clustersToGeoJSON = (clusters: ClusteredHotspot[]) => {
@@ -117,7 +115,7 @@ export function CityMap({ hotspots = [] }: CityMapProps) {
     };
 
     fetchClusters();
-  }, []);
+  }, [setAllHotspots]);
 
   useEffect(() => {
     // Initial animation sequence
@@ -343,7 +341,7 @@ export function CityMap({ hotspots = [] }: CityMapProps) {
   return (
     <div className="relative w-full h-full">
       {/* Debug toggle button */}
-      <div className="absolute top-4 right-4 z-10">
+      {/* <div className="absolute top-4 right-4 z-10">
         <Button
           variant={showDebugView ? "default" : "outline"}
           size="sm"
@@ -352,7 +350,7 @@ export function CityMap({ hotspots = [] }: CityMapProps) {
         >
           {showDebugView ? "Hide" : "Show"} Debug View
         </Button>
-      </div>
+      </div> */}
 
       <Map
         ref={mapRef}

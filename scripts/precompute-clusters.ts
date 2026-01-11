@@ -1,6 +1,6 @@
 import clientPromise from "@/lib/mongodb";
 import { clusterCollisions } from "@/lib/clustering";
-import type { CollisionPoint, ClusteredHotspot } from "@/types/collision";
+import type { CollisionPoint } from "@/types/collision";
 import { writeFileSync, mkdirSync, statSync } from "fs";
 import { join } from "path";
 
@@ -117,7 +117,7 @@ async function precomputeClusters() {
     // Ensure the data directory exists
     try {
       mkdirSync(join(process.cwd(), "data"), { recursive: true });
-    } catch (err) {
+    } catch {
       // Directory might already exist, that's fine
     }
     

@@ -3,26 +3,39 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState, useCallback } from "react";
 import { useMapStore } from "@/stores/map-store";
-import { X, Undo2 } from "lucide-react";
+import { X } from "lucide-react";
 import { OverviewTab } from "./overview-tab";
 import { PhotoProvider } from "react-photo-view";
 import { ImageChatSidebar } from "./image-chat-sidebar";
+import { ImageCarousel } from "@/components/ui/image-carousel";
 import type { ClusteredHotspot } from "@/types/collision";
 
-function PhotoViewOverlay({
-  imageSrc,
+interface GeneratedImage {
+  id: string;
+  url: string;
+  timestamp: number;
+}
+
+function PhotoViewOverlay({ 
+  imageSrc, 
   clusterId,
   onImageReplaced,
   onClose,
-  replacedImageUrl,
-  onUndo,
-}: {
+  currentImageUrl,
+  carouselImages,
+  selectedImageId,
+  onRevertImage,
+  onSelectImage,
+}: { 
   imageSrc?: string;
   clusterId?: string;
   onImageReplaced?: (imageUrl: string | null) => void;
   onClose?: () => void;
-  replacedImageUrl?: string | null;
-  onUndo?: () => void;
+  currentImageUrl?: string | null;
+  carouselImages?: Array<{ id: string; imgUrl: string; isOriginal: boolean }>;
+  selectedImageId?: string;
+  onRevertImage?: (imageId: string) => void;
+  onSelectImage?: (imageId: string) => void;
 }) {
   useEffect(() => {
     document.body.classList.add("photo-view-open");
@@ -101,42 +114,63 @@ function PhotoViewOverlay({
     };
   }, []);
 
-  // Use replaced image if available, otherwise use original imageSrc
-  const currentImageSrc = replacedImageUrl || imageSrc;
+  // Use current image if available, otherwise use original imageSrc
+  const displayImageSrc = currentImageUrl || imageSrc;
 
   return (
     <>
-      <ImageChatSidebar
-        imageSrc={currentImageSrc}
+      <ImageChatSidebar 
+        imageSrc={displayImageSrc} 
         clusterId={clusterId}
-        onImageReplaced={onImageReplaced}
-        onClose={onClose}
+        onImageReplaced={onImageReplaced} 
+        onClose={onClose} 
       />
-      {replacedImageUrl && onUndo && <UndoButton onUndo={onUndo} />}
+      {carouselImages && carouselImages.length > 0 && (
+        <ImageCarouselOverlay
+          images={carouselImages}
+          selectedImageId={selectedImageId || "original"}
+          onRevert={onRevertImage}
+          onSelect={onSelectImage}
+        />
+      )}
     </>
   );
 }
 
-function UndoButton({ onUndo }: { onUndo: () => void }) {
+function ImageCarouselOverlay({
+  images,
+  selectedImageId,
+  onRevert,
+  onSelect,
+}: {
+  images: Array<{ id: string; imgUrl: string; isOriginal: boolean }>;
+  selectedImageId?: string;
+  onRevert?: (imageId: string) => void;
+  onSelect?: (imageId: string) => void;
+}) {
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.8, y: -20 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.8, y: -20 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
-      className="fixed top-4 left-4 z-[70] pointer-events-auto"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 10 }}
+      transition={{
+        duration: 0.3,
+        ease: "easeOut",
+      }}
+      className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[60] pointer-events-auto bg-zinc-950/95 backdrop-blur-sm border border-zinc-800 rounded-lg shadow-lg"
+      style={{
+        maxWidth: "calc(100vw - 500px)",
+      }}
     >
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onUndo();
-        }}
-        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white shadow-lg transition-colors"
-        title="Undo - Restore original image"
-      >
-        <Undo2 className="h-4 w-4" />
-        <span className="text-sm font-medium">Undo</span>
-      </button>
+      <div className="px-3 py-2">
+        <ImageCarousel
+          images={images}
+          onRevert={onRevert}
+          onSelect={onSelect}
+          selectedImageId={selectedImageId || "original"}
+          cardsPerView={5}
+        />
+      </div>
     </motion.div>
   );
 }
@@ -149,28 +183,125 @@ export function IntersectionSidebar() {
     selectHotspot,
     selectCollision,
   } = useMapStore();
-  const [replacedImageUrl, setReplacedImageUrl] = useState<string | null>(null);
   const isOpen = selectedHotspot !== null || selectedCollision !== null;
   const displayKey = selectedCollision?.id || selectedHotspot?.id || "none";
+  
+  // Reset state when displayKey changes using key pattern
+  const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
+  const [currentImageId, setCurrentImageId] = useState<string | null>(null);
+  
+  // Reset when switching between hotspots/collisions
+  useEffect(() => {
+    setGeneratedImages([]);
+    setCurrentImageId(null);
+  }, [displayKey]);
 
   const handleClose = () => {
     selectHotspot(null);
     selectCollision(null);
-    setReplacedImageUrl(null); // Reset replaced image when closing
+    setGeneratedImages([]);
+    setCurrentImageId(null);
   };
 
   const handleImageReplaced = useCallback((imageUrl: string | null) => {
-    setReplacedImageUrl(imageUrl);
+    if (!imageUrl) return;
+    
+    // Check if this image URL already exists to prevent duplicates
+    setGeneratedImages((prev) => {
+      const exists = prev.some((img) => img.url === imageUrl);
+      if (exists) {
+        // If it exists, just select the existing one
+        const existing = prev.find((img) => img.url === imageUrl);
+        if (existing) {
+          setCurrentImageId(existing.id);
+        }
+        return prev;
+      }
+      
+      // Add new generated image to the array
+      const newImage: GeneratedImage = {
+        id: `generated-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        url: imageUrl,
+        timestamp: Date.now(),
+      };
+      
+      return [...prev, newImage];
+    });
   }, []);
 
-  const handleUndo = () => {
-    setReplacedImageUrl(null);
+  // Auto-select the newest image whenever a new image is added
+  useEffect(() => {
+    if (generatedImages.length > 0) {
+      // Find the image with the highest timestamp (newest)
+      const newestImage = generatedImages.reduce((latest, current) => {
+        return current.timestamp > latest.timestamp ? current : latest;
+      });
+      
+      // Always select the newest image when array changes
+      setCurrentImageId(newestImage.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [generatedImages.length]); // Only trigger when array length changes (new image added)
+
+  const handleRevert = (imageId: string) => {
+    setGeneratedImages((prev) => prev.filter((img) => img.id !== imageId));
+    // If we're reverting the current image, switch to original or next available
+    if (currentImageId === imageId) {
+      if (generatedImages.length > 1) {
+        // Switch to the most recent remaining image
+        const remaining = generatedImages.filter((img) => img.id !== imageId);
+        if (remaining.length > 0) {
+          const latest = remaining[remaining.length - 1];
+          setCurrentImageId(latest.id);
+        } else {
+          setCurrentImageId(null);
+        }
+      } else {
+        setCurrentImageId(null);
+      }
+    }
   };
 
-  // Reset replaced image when switching between hotspots/collisions
-  useEffect(() => {
-    setReplacedImageUrl(null);
-  }, [displayKey]);
+  const handleSelectImage = (imageId: string) => {
+    if (imageId === "original") {
+      setCurrentImageId(null);
+    } else {
+      setCurrentImageId(imageId);
+    }
+  };
+
+
+  // Get current image URL to display
+  const getCurrentImageUrl = () => {
+    if (currentImageId && currentImageId !== "original") {
+      const image = generatedImages.find((img) => img.id === currentImageId);
+      return image?.url || null;
+    }
+    return null; // null means show original
+  };
+
+  // Build carousel images array (original + generated)
+  const getCarouselImages = () => {
+    const images: Array<{ id: string; imgUrl: string; isOriginal: boolean }> = [];
+    
+    if (originalImageUrl) {
+      images.push({
+        id: "original",
+        imgUrl: originalImageUrl,
+        isOriginal: true,
+      });
+    }
+    
+    generatedImages.forEach((img) => {
+      images.push({
+        id: img.id,
+        imgUrl: img.url,
+        isOriginal: false,
+      });
+    });
+    
+    return images;
+  };
 
   // Convert CollisionPoint to ClusteredHotspot format for UI compatibility
   const displayHotspot: ClusteredHotspot | null =
@@ -200,6 +331,16 @@ export function IntersectionSidebar() {
             "Intersection",
         }
       : null);
+
+  // Get the original image URL for the current hotspot
+  const getOriginalImageUrl = () => {
+    if (!displayHotspot) return null;
+    const lat = displayHotspot.centroid.lat;
+    const lng = displayHotspot.centroid.lng;
+    return `/api/streetview?lat=${lat}&lng=${lng}&heading=0&size=640x640`;
+  };
+
+  const originalImageUrl = getOriginalImageUrl();
 
   return (
     <AnimatePresence mode="wait">
@@ -267,8 +408,11 @@ export function IntersectionSidebar() {
                       clusterId={displayHotspot?.id}
                       onImageReplaced={handleImageReplaced}
                       onClose={photoViewClose}
-                      replacedImageUrl={replacedImageUrl}
-                      onUndo={handleUndo}
+                      currentImageUrl={getCurrentImageUrl()}
+                      carouselImages={getCarouselImages()}
+                      selectedImageId={currentImageId === null ? "original" : currentImageId}
+                      onRevertImage={handleRevert}
+                      onSelectImage={handleSelectImage}
                     />
                   );
                 }}
@@ -278,7 +422,11 @@ export function IntersectionSidebar() {
                   collision={selectedCollision}
                   placeInfo={placeInfo}
                   onImageReplaced={handleImageReplaced}
-                  replacedImageUrl={replacedImageUrl}
+                  currentImageUrl={getCurrentImageUrl()}
+                  carouselImages={getCarouselImages()}
+                  selectedImageId={currentImageId === null ? "original" : currentImageId}
+                  onRevertImage={handleRevert}
+                  onSelectImage={handleSelectImage}
                 />
               </PhotoProvider>
             </div>

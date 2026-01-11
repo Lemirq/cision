@@ -3,6 +3,7 @@
 import { StreetViewPanel } from "./street-view-panel";
 import { StatsGrid } from "./stats-grid";
 import { SeverityProgressBar } from "./severity-progress-bar";
+import { Button } from "@/components/ui/button";
 import type {
   ClusteredHotspot,
   CollisionPoint,
@@ -26,14 +27,22 @@ interface OverviewTabProps {
   collision?: CollisionPoint | null;
   placeInfo?: PlaceInfo | null;
   onImageReplaced?: (imageUrl: string | null) => void; // Callback when image is replaced
-  replacedImageUrl?: string | null; // Current replaced image URL
+  currentImageUrl?: string | null; // Current displayed image URL
+  carouselImages?: Array<{ id: string; imgUrl: string; isOriginal: boolean }>;
+  selectedImageId?: string;
+  onRevertImage?: (imageId: string) => void;
+  onSelectImage?: (imageId: string) => void;
 }
 
 export function OverviewTab({
   hotspot,
   collision,
   placeInfo,
-  replacedImageUrl,
+  currentImageUrl,
+  carouselImages: _carouselImages = [],
+  selectedImageId: _selectedImageId,
+  onRevertImage: _onRevertImage,
+  onSelectImage: _onSelectImage,
 }: OverviewTabProps) {
   const allHotspots = useMapStore((state) => state.allHotspots);
   const displayAddress = placeInfo?.formattedAddress || hotspot.address;
@@ -41,12 +50,23 @@ export function OverviewTab({
     placeInfo?.neighborhood ||
     collision?.neighbourhood ||
     "Intersection location";
-  
+
   // Normalize severity score relative to all hotspots
   const normalizedSeverityScore = normalizeSeverityScore(
     hotspot.severity_score,
     allHotspots
   );
+
+  const handleFixClick = () => {
+    // Find and click the StreetViewPanel image to open PhotoView
+    // This ensures we use the exact same image URL (including current heading)
+    const streetViewImage = document.querySelector(
+      'img[alt="Street View"], img[alt="Redesigned Intersection"]'
+    ) as HTMLImageElement;
+    if (streetViewImage) {
+      streetViewImage.click();
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -72,87 +92,17 @@ export function OverviewTab({
         hour={collision?.hour}
         year={collision?.year}
         month={collision?.month}
-        replacedImageUrl={replacedImageUrl}
+        replacedImageUrl={currentImageUrl}
       />
 
       {/* Show cluster information if it's a cluster (multiple collisions) */}
       {!collision && hotspot.total_count > 1 && (
-        <div className="space-y-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-          {/* Date range for cluster */}
-          {hotspot.collisions && hotspot.collisions.length > 0 && (
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-3 w-3 text-zinc-500" />
-                <div>
-                  <p className="text-xs text-zinc-500">Date Range</p>
-                  <p className="text-sm text-white">
-                    {(() => {
-                      const dates = hotspot.collisions
-                        .map((c: CollisionPoint) => {
-                          if (c.year && c.month) {
-                            return `${c.month} ${c.year}`;
-                          }
-                          // Remove time portion from date string if present
-                          return c.date ? c.date.split(" ")[0] : "";
-                        })
-                        .filter(Boolean)
-                        .sort();
-                      if (dates.length === 0) return "Unknown";
-                      if (dates.length === 1) return dates[0];
-                      return `${dates[0]} - ${dates[dates.length - 1]}`;
-                    })()}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="h-3 w-3 text-zinc-500" />
-                <div>
-                  <p className="text-xs text-zinc-500">Collisions</p>
-                  <p className="text-sm text-white">
-                    {hotspot.total_count} total
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Severity breakdown */}
-          {(hotspot.fatal_count > 0 ||
-            hotspot.cyclist_count > 0 ||
-            hotspot.pedestrian_count > 0) && (
-            <div>
-              <p className="text-xs text-zinc-500 mb-2">Severity Breakdown</p>
-              <div className="flex flex-wrap gap-2 w-full">
-                {hotspot.fatal_count > 0 && (
-                  <div className="flex items-center gap-1 px-2 py-1 rounded bg-red-900/30 border border-red-700/50">
-                    <AlertTriangle className="h-3 w-3 text-red-400" />
-                    <span className="text-xs text-red-400">
-                      {hotspot.fatal_count} Fatal
-                    </span>
-                  </div>
-                )}
-                {hotspot.cyclist_count > 0 && (
-                  <div className="flex items-center gap-1 px-2 py-1 rounded bg-zinc-800">
-                    <Bike className="h-3 w-3 text-zinc-400" />
-                    <span className="text-xs text-zinc-300">
-                      {hotspot.cyclist_count} Cyclist
-                      {hotspot.cyclist_count > 1 ? "s" : ""}
-                    </span>
-                  </div>
-                )}
-                {hotspot.pedestrian_count > 0 && (
-                  <div className="flex items-center gap-1 px-2 py-1 rounded bg-zinc-800">
-                    <User className="h-3 w-3 text-zinc-400" />
-                    <span className="text-xs text-zinc-300">
-                      {hotspot.pedestrian_count} Pedestrian
-                      {hotspot.pedestrian_count > 1 ? "s" : ""}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
+        <Button
+          className="w-full bg-green-600 hover:bg-green-700 text-white"
+          onClick={handleFixClick}
+        >
+          FIX
+        </Button>
       )}
 
       {/* Show collision details if it's a single collision */}

@@ -15,25 +15,24 @@ import { useRouter } from "next/navigation";
 interface LeftSidebarProps {
   onVoiceAgentsClick?: () => void;
   onSafetyAuditClick?: () => void;
+  onLeaderboardClick?: () => void;
   isVoiceAgentsOpen?: boolean;
   isSafetyAuditOpen?: boolean;
+  isLeaderboardOpen?: boolean;
 }
 
 export function LeftSidebar({
   onVoiceAgentsClick,
   onSafetyAuditClick,
+  onLeaderboardClick,
   isVoiceAgentsOpen = false,
   isSafetyAuditOpen = false,
+  isLeaderboardOpen = false,
 }: LeftSidebarProps) {
   const router = useRouter();
 
   const handleExit = () => {
     router.push("/");
-  };
-
-  const handleLeaderboard = () => {
-    // Placeholder for future leaderboard functionality
-    console.log("Leaderboard clicked - to be implemented");
   };
 
   return (
@@ -69,7 +68,8 @@ export function LeftSidebar({
             />
             <MenuItem
               icon={<ChartBar size={24} strokeWidth={1.5} />}
-              onClick={handleLeaderboard}
+              onClick={onLeaderboardClick}
+              isActive={isLeaderboardOpen}
             />
             <MenuItem
               icon={<LogOut size={24} strokeWidth={1.5} />}

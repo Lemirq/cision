@@ -154,8 +154,7 @@ export async function POST(request: NextRequest) {
           .toBuffer();
         finalMediaType = "image/png";
       }
-    } catch (resizeError) {
-      console.error("Error resizing image:", resizeError);
+    } catch {
       // Fallback to original generated image if resize fails
       resizedImageBuffer = Buffer.from(imageData.data);
     }
