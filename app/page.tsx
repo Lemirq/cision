@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, ChevronDown } from "lucide-react"
 import { ContainerScroll } from "@/components/ui/container-scroll-animation"
 import Image from "next/image"
 import Link from "next/link"
@@ -126,6 +126,15 @@ export default function HomePage() {
           Explore Cision
           <ArrowRight className="w-4 h-4" />
         </a>
+
+        {/* Down Arrow Hint */}
+        <div
+          className="pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/70"
+          aria-hidden="true"
+        >
+          <span className="text-xs md:text-sm">swipe down</span>
+          <ChevronDown className="w-6 h-6 animate-bounce" />
+        </div>
       </main>
       
       {/* Scroll Preview Section */}
