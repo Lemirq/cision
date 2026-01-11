@@ -231,7 +231,18 @@ export function SafetyAuditSidebar({
 
         // If we have a current image URL, use it for single image audit
         // Otherwise, generate panoramic audit from street view
-        const requestBody: any = {
+        const requestBody: {
+          clusterData: {
+            address: string;
+            total_count: number;
+            fatal_count: number;
+            cyclist_count: number;
+            pedestrian_count: number;
+          };
+          imageUrl?: string;
+          lat?: number;
+          lng?: number;
+        } = {
           clusterData: {
             address: selectedHotspot.address,
             total_count: selectedHotspot.total_count,

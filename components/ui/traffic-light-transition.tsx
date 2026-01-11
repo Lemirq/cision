@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, startTransition } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { usePathname } from "next/navigation";
 
@@ -31,8 +31,10 @@ export function TrafficLightTransition() {
     if (isFirstRenderRef.current) {
       isFirstRenderRef.current = false;
       prevPathRef.current = pathname;
-      setVisible(true);
-      setStep(0);
+      startTransition(() => {
+        setVisible(true);
+        setStep(0);
+      });
       stepTimerRef.current = setTimeout(() => {
         setStep(1);
         stepTimerRef.current = setTimeout(() => {
@@ -51,8 +53,10 @@ export function TrafficLightTransition() {
     }
 
     // 非首次：统一显示交通灯
-    setVisible(true);
-    setStep(0);
+    startTransition(() => {
+      setVisible(true);
+      setStep(0);
+    });
     stepTimerRef.current = setTimeout(() => {
       setStep(1);
       stepTimerRef.current = setTimeout(() => {

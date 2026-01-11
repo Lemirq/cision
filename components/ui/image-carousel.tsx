@@ -19,7 +19,6 @@ interface ImageCarouselProps {
 
 export function ImageCarousel({
   images,
-  onRevert: _onRevert,
   onSelect,
   selectedImageId,
   cardsPerView = 3,

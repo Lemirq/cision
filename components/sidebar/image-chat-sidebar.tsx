@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -98,18 +98,25 @@ export function ImageChatSidebar({
     return `${typeof window !== "undefined" ? window.location.origin : ""}${src}`;
   };
 
-  const { messages, sendMessage, status } = useChat({
-    transport: new DefaultChatTransport({
-      api: "/api/chat",
-      body: () => ({
-        // Always use the currently active/selected image from the ref
-        // This ensures that when user selects a different image from carousel,
-        // the next generation will use that selected image, not the last generated one
-        imageUrl: getAbsoluteImageUrl(imageSrcRef.current),
-        clusterId: clusterId,
-        context: clusterContext,
+  // Memoize transport to avoid creating it during render
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: "/api/chat",
+        body: () => ({
+          // Always use the currently active/selected image from the ref
+          // This ensures that when user selects a different image from carousel,
+          // the next generation will use that selected image, not the last generated one
+          imageUrl: getAbsoluteImageUrl(imageSrcRef.current),
+          clusterId: clusterId,
+          context: clusterContext,
+        }),
       }),
-    }),
+    [clusterId, clusterContext]
+  );
+
+  const { messages, sendMessage, status } = useChat({
+    transport,
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
   });
 
@@ -346,7 +353,7 @@ export function ImageChatSidebar({
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
-                    className="flex gap-3 flex-row mb-4"
+                    className="flex gap-3 flex-row mb-2"
                   >
                     <div className="flex-1 max-w-[80%] items-start">
                       {completedToolParts.map((part, toolIndex) => {
@@ -382,8 +389,8 @@ export function ImageChatSidebar({
                   </motion.div>
                 )}
                 
-                {/* Render text parts as a separate message bubble (only if there are completed tool parts) */}
-                {completedToolParts.length > 0 && textParts.length > 0 && (
+                {/* Render the main message (text parts and in-progress tool parts) */}
+                {(textParts.length > 0 || inProgressToolParts.length > 0 || (!completedToolParts.length && !textParts.length && !inProgressToolParts.length)) && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -407,52 +414,7 @@ export function ImageChatSidebar({
                             : "bg-zinc-800 text-zinc-200"
                         )}
                       >
-                        {textParts.map((part, index) => (
-                          <p
-                            key={index}
-                            className="whitespace-pre-wrap break-words"
-                          >
-                            {part.text}
-                          </p>
-                        ))}
-                      </div>
-                      <span className="text-xs text-zinc-500 mt-1 block">
-                        {new Date().toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                    </div>
-                  </motion.div>
-                )}
-                
-                {/* Render the main message (text parts when no completed tools, and in-progress tool parts) */}
-                {((!completedToolParts.length && textParts.length > 0) || inProgressToolParts.length > 0 || (!completedToolParts.length && !textParts.length && !inProgressToolParts.length)) && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    className={cn(
-                      "flex gap-3",
-                      message.role === "user" ? "flex-row-reverse" : "flex-row"
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        "flex-1 max-w-[80%]",
-                        message.role === "user" ? "items-end" : "items-start"
-                      )}
-                    >
-                      <div
-                        className={cn(
-                          "rounded-lg px-3 py-2 text-sm",
-                          message.role === "user"
-                            ? "bg-primary/20 text-white"
-                            : "bg-zinc-800 text-zinc-200"
-                        )}
-                      >
-                        {/* Only render text parts if there are no completed tool parts (they're rendered separately above) */}
-                        {!completedToolParts.length && textParts.length > 0 && textParts.map((part, index) => (
+                        {textParts.length > 0 && textParts.map((part, index) => (
                           <p
                             key={index}
                             className="whitespace-pre-wrap break-words"

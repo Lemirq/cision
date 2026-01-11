@@ -39,10 +39,6 @@ export function OverviewTab({
   collision,
   placeInfo,
   currentImageUrl,
-  carouselImages: _carouselImages = [],
-  selectedImageId: _selectedImageId,
-  onRevertImage: _onRevertImage,
-  onSelectImage: _onSelectImage,
 }: OverviewTabProps) {
   const allHotspots = useMapStore((state) => state.allHotspots);
   const displayAddress = placeInfo?.formattedAddress || hotspot.address;

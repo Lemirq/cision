@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       const metadata = await sharp(Buffer.from(imageBuffer)).metadata();
       originalWidth = metadata.width || 1280;
       originalHeight = metadata.height || 1280;
-    } catch (error) {
+    } catch {
       // Fallback dimensions if we can't read metadata
       originalWidth = 1280;
       originalHeight = 1280;

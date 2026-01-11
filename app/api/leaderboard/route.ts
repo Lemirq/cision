@@ -41,21 +41,11 @@ const cached: {
   },
 };
 
-// Clear cache function for development (can be called via API if needed)
-function clearCache() {
-  cached.loaded = false;
-  cached.byMetric = {
-    total: [],
-    fatal: [],
-    cyclist: [],
-    pedestrian: [],
-  };
-}
 
 function toRows(data: ClusterEntry[]): LeaderboardRow[] {
   return data.map((c) => {
     // Extract severity_score - handle both the typed field and any untyped data
-    const severityScore = (c as any).severity_score ?? c.severity_score ?? 0;
+    const severityScore = (c as ClusterEntry & { severity_score?: number }).severity_score ?? c.severity_score ?? 0;
     return {
       id: c.id,
       name: c.intersection || c.address,

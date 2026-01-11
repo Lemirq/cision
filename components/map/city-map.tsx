@@ -34,8 +34,8 @@ export function CityMap({ hotspots = [] }: CityMapProps) {
   const [clusteredHotspots, setClusteredHotspots] = useState<
     ClusteredHotspot[]
   >([]);
-  const [_isLoading, setIsLoading] = useState(true);
-  const [showDebugView, _setShowDebugView] = useState(false); // Toggle for debug visualization
+  const [isLoading, setIsLoading] = useState(true);
+  const [showDebugView] = useState(false); // Toggle for debug visualization
 
   // Convert clusters to GeoJSON format for heatmap
   const clustersToGeoJSON = (clusters: ClusteredHotspot[]) => {
@@ -263,27 +263,6 @@ export function CityMap({ hotspots = [] }: CityMapProps) {
 
   // Combine both old hotspots and new clustered hotspots
   const allHotspots = [...hotspots, ...clusteredHotspots];
-
-  const geojson = {
-    type: "FeatureCollection" as const,
-    features: allHotspots.map((hotspot) => ({
-      type: "Feature" as const,
-      geometry: {
-        type: "Point" as const,
-        coordinates: [hotspot.centroid.lng, hotspot.centroid.lat] as [
-          number,
-          number,
-        ],
-      },
-      properties: {
-        id: hotspot.id,
-        severity: hotspot.severity_score,
-        intersection: hotspot.intersection,
-        address: hotspot.address,
-        count: hotspot.total_count,
-      },
-    })),
-  };
 
   // Create debug visualization data: 50m radius circles and individual collision points
   const debugRadiusCircles =

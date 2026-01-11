@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import type { ClusteredHotspot } from "@/types/collision";
 import { ChevronLeft, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -84,7 +84,7 @@ export function LeaderboardSidebar({
         if (aborted) return;
         setFetched(data.rows || []);
         setTotalPages(data.totalPages || 1);
-      } catch (e) {
+      } catch {
         if (!aborted) setError("Failed to load leaderboard");
       } finally {
         if (!aborted) setLoading(false);
@@ -132,7 +132,7 @@ export function LeaderboardSidebar({
       })) as unknown as ClusteredHotspot[];
   }, [hotspots, fetched, metric, useExternal, page]);
 
-  const getValue = (h: ClusteredHotspot) => {
+  const getValue = useCallback((h: ClusteredHotspot) => {
     switch (metric) {
       case "fatal":
         return h.fatal_count;
@@ -143,11 +143,11 @@ export function LeaderboardSidebar({
       default:
         return h.total_count;
     }
-  };
+  }, [metric]);
 
   const maxValue = useMemo(() => {
     return sorted.length > 0 ? Math.max(...sorted.map(getValue)) : 0;
-  }, [sorted]);
+  }, [sorted, getValue]);
 
   const baseIndex = (page - 1) * pageSize;
 
