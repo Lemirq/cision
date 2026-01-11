@@ -15,7 +15,6 @@ export default function App() {
   const [isVoiceAgentsOpen, setIsVoiceAgentsOpen] = useState(false);
   const [isSafetyAuditOpen, setIsSafetyAuditOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
-  const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [lastSelectedHotspotId, setLastSelectedHotspotId] = useState<string | null>(null);
   const selectedHotspot = useMapStore((state) => state.selectedHotspot);
 
