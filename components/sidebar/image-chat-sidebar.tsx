@@ -9,6 +9,7 @@ import { DefaultChatTransport, lastAssistantMessageIsCompleteWithToolCalls } fro
 import {
   getClusterData,
   getClusterContext,
+  getFullSafetyAuditContext,
   addImageVersion,
   getInfrastructureGaps,
   saveClusterData,
@@ -62,11 +63,12 @@ export function ImageChatSidebar({
     return () => clearInterval(interval);
   }, [clusterId]);
 
-  // Load cluster context - refresh when clusterId or cluster data changes
+  // Load comprehensive cluster context - refresh when clusterId or cluster data changes
   useEffect(() => {
     if (clusterId) {
       const loadContext = () => {
-        const context = getClusterContext(clusterId);
+        // Use the comprehensive safety audit context function
+        const context = getFullSafetyAuditContext(clusterId);
         setClusterContext(context);
       };
 

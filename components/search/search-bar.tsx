@@ -254,22 +254,21 @@ export function SearchBar({ hotspots }: SearchBarProps) {
               setPlaceSuggestions([]);
               inputRef.current?.focus();
             }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition-colors"
+            className="absolute max-w-xl mx-auto right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition-colors"
           >
             <X className="h-4 w-4" />
           </button>
         )}
-      </div>
 
-      <AnimatePresence>
-        {showDropdown && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className="absolute top-full mt-2 w-full bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl overflow-hidden z-50 max-h-80 overflow-y-auto"
-          >
+        <AnimatePresence>
+          {showDropdown && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="absolute top-full mt-2 w-full bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl overflow-hidden z-50 max-h-80 overflow-y-auto"
+            >
             {results.length === 0 && isLoadingPlaces ? (
               <div className="px-4 py-6 text-center text-zinc-400 text-sm">
                 <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />
@@ -368,9 +367,10 @@ export function SearchBar({ hotspots }: SearchBarProps) {
                   )}
               </>
             )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }

@@ -19,7 +19,7 @@ import {
 import { useConversation } from "@elevenlabs/react";
 import { cn } from "@/lib/utils";
 import { useMapStore } from "@/stores/map-store";
-import { getClusterData, getClusterContext } from "@/lib/cluster-storage";
+import { getClusterData, getClusterContext, getFullSafetyAuditContext } from "@/lib/cluster-storage";
 
 // Agent IDs
 const AGENTS = {
@@ -218,12 +218,14 @@ export function PersonaSidebar({ isOpen = false, onClose }: PersonaSidebarProps)
       stopRinging();
       setConnectionStatus("connecting");
 
-      // Load cluster context for context-aware responses
+      // Load comprehensive cluster and safety audit context for voice agents
       let dynamicVariables: Record<string, string> | undefined = undefined;
       if (selectedHotspot) {
         const clusterData = getClusterData(selectedHotspot.id);
-        const context = getClusterContext(selectedHotspot.id);
+        // Use comprehensive safety audit context instead of basic context
+        const fullContext = getFullSafetyAuditContext(selectedHotspot.id);
 
+        // Basic cluster metadata (for quick reference)
         dynamicVariables = {
           intersection_name:
             selectedHotspot.intersection || selectedHotspot.address,
@@ -233,9 +235,11 @@ export function PersonaSidebar({ isOpen = false, onClose }: PersonaSidebarProps)
           pedestrian_count: selectedHotspot.pedestrian_count.toString(),
         };
 
-        // Add safety audit information if available
+        // Add detailed safety audit information if available
         if (clusterData?.safetyAudit) {
           const audit = clusterData.safetyAudit;
+          
+          // Calculate average safety score
           const safetyScore = Math.floor(
             (audit.metrics.signage +
               audit.metrics.lighting +
@@ -247,30 +251,71 @@ export function PersonaSidebar({ isOpen = false, onClose }: PersonaSidebarProps)
           );
 
           dynamicVariables.safety_score = safetyScore.toString();
+          dynamicVariables.walkability_score = audit.walkabilityScore.toString();
           
-          // Add infrastructure gaps as comma-separated list
+          // Individual metric scores
+          dynamicVariables.signage_score = audit.metrics.signage.toString();
+          dynamicVariables.lighting_score = audit.metrics.lighting.toString();
+          dynamicVariables.crosswalk_visibility_score = audit.metrics.crosswalkVisibility.toString();
+          dynamicVariables.bike_infrastructure_score = audit.metrics.bikeInfrastructure.toString();
+          dynamicVariables.pedestrian_infrastructure_score = audit.metrics.pedestrianInfrastructure.toString();
+          dynamicVariables.traffic_calming_score = audit.metrics.trafficCalming.toString();
+          
+          // Safety flaws summary
+          if (audit.flaws.length > 0) {
+            const highSeverityFlaws = audit.flaws.filter(f => f.severity === "high");
+            const mediumSeverityFlaws = audit.flaws.filter(f => f.severity === "medium");
+            const lowSeverityFlaws = audit.flaws.filter(f => f.severity === "low");
+            
+            dynamicVariables.total_flaws = audit.flaws.length.toString();
+            dynamicVariables.high_severity_flaws = highSeverityFlaws.length.toString();
+            dynamicVariables.medium_severity_flaws = mediumSeverityFlaws.length.toString();
+            dynamicVariables.low_severity_flaws = lowSeverityFlaws.length.toString();
+            
+            // List of flaw titles
+            dynamicVariables.flaw_titles = audit.flaws.map(f => f.title).join("; ");
+          }
+          
+          // Improvement suggestions summary
+          if (audit.suggestions.length > 0) {
+            const highPrioritySuggestions = audit.suggestions.filter(s => s.priority === "high");
+            dynamicVariables.total_suggestions = audit.suggestions.length.toString();
+            dynamicVariables.high_priority_suggestions = highPrioritySuggestions.length.toString();
+            dynamicVariables.suggestion_titles = audit.suggestions.map(s => s.title).join("; ");
+          }
+          
+          // Infrastructure gaps
           if (audit.infrastructureGaps.length > 0) {
             dynamicVariables.missing_infrastructure = audit.infrastructureGaps.join(", ");
+            dynamicVariables.infrastructure_gap_count = audit.infrastructureGaps.length.toString();
           }
+        }
 
         // Add recent improvements if any
-        if (clusterData.images.history.length > 0) {
+        if (clusterData && clusterData.images.history && clusterData.images.history.length > 0) {
           const recentImprovementsList = clusterData.images.history
-            .slice(-3)
+            .slice(-5)
+            .reverse()
             .map((v) => v.prompt || v.description || "Image improvement")
             .join("; ");
           dynamicVariables.recent_improvements = recentImprovementsList;
-        }
+          dynamicVariables.has_recent_improvements = "true";
+        } else {
+          dynamicVariables.has_recent_improvements = "false";
         }
 
-        // Include full context (truncated if too long for dynamic variables)
-        // Note: ElevenLabs may have limits on dynamic variable values
-        if (context) {
-          // Truncate context to reasonable length for dynamic variables
-          const truncatedContext = context.length > 500 
-            ? context.substring(0, 500) + "..."
-            : context;
-          dynamicVariables.cluster_context = truncatedContext;
+        // Include comprehensive full context
+        // Note: ElevenLabs may have limits on dynamic variable values, but we'll include as much as possible
+        if (fullContext) {
+          // For ElevenLabs, we'll include the full context but also provide a summary
+          // The full context might be truncated by ElevenLabs if too long
+          dynamicVariables.full_safety_audit_context = fullContext;
+          
+          // Also provide a condensed version for quick reference
+          const condensedContext = fullContext.length > 2000 
+            ? fullContext.substring(0, 2000) + "...\n[Full context truncated - see full_safety_audit_context for complete data]"
+            : fullContext;
+          dynamicVariables.safety_audit_summary = condensedContext;
         }
       }
 
