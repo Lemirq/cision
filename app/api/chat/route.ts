@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     }
 
     const result = streamText({
-      model: google("gemini-2.0-flash-exp"),
+      model: google("gemini-2.5-flash-lite"),
       system: `You are an AI agent specialized in redefining and improving intersections for better safety and urban design. 
 You help users reimagine intersections by generating new images based on their requests. 
 When a user asks you to modify or improve an intersection, use the generateImage tool to create a new visualization.

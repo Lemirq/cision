@@ -254,7 +254,7 @@ export function ImageChatSidebar({ imageSrc, onImageReplaced, onClose }: ImageCh
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={imageSrc ? "Describe how to redefine this intersection..." : "No image available"}
+            placeholder={imageSrc ? "Write your changes here..." : "No image available"}
             className="flex-1 resize-none rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent max-h-32"
             rows={1}
             style={{
