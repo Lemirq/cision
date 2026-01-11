@@ -31,6 +31,14 @@ export function ImageChatSidebar({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const previousImageRef = useRef<string | undefined>(imageSrc);
+  const imageSrcRef = useRef<string | undefined>(imageSrc);
+
+  // Update ref whenever imageSrc changes to ensure we always use the currently active/selected image
+  // This ensures that when user selects a different image from the carousel, subsequent generations
+  // will use that selected image as reference, not just the last generated one
+  useEffect(() => {
+    imageSrcRef.current = imageSrc;
+  }, [imageSrc]);
 
   // Get infrastructure gaps from store - use polling to avoid subscription issues
   const [infrastructureGaps, setInfrastructureGaps] = useState<string[]>(() => 
@@ -92,7 +100,10 @@ export function ImageChatSidebar({
     transport: new DefaultChatTransport({
       api: "/api/chat",
       body: () => ({
-        imageUrl: getAbsoluteImageUrl(imageSrc),
+        // Always use the currently active/selected image from the ref
+        // This ensures that when user selects a different image from carousel,
+        // the next generation will use that selected image, not the last generated one
+        imageUrl: getAbsoluteImageUrl(imageSrcRef.current),
         clusterId: clusterId,
         context: clusterContext,
       }),
@@ -200,10 +211,12 @@ export function ImageChatSidebar({
     previousImageRef.current = imageSrc;
   }, [imageSrc, clusterId]);
 
-  // Reset processed tool calls when imageSrc changes
+  // Reset processed tool calls when imageSrc changes (when user selects a different active image)
   useEffect(() => {
     processedToolCallsRef.current.clear();
     lastProcessedMessageIdRef.current = null;
+    // Also update the ref immediately to ensure it's in sync
+    imageSrcRef.current = imageSrc;
   }, [imageSrc]);
 
   const handleSend = () => {
