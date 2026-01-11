@@ -8,8 +8,17 @@ export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages, imageUrl }: { messages: UIMessage[]; imageUrl?: string } =
-      await req.json();
+    const {
+      messages,
+      imageUrl,
+      clusterId,
+      context,
+    }: {
+      messages: UIMessage[];
+      imageUrl?: string;
+      clusterId?: string;
+      context?: string;
+    } = await req.json();
 
     if (!imageUrl) {
       return new Response(
@@ -37,9 +46,8 @@ export async function POST(req: NextRequest) {
       process.env.GOOGLE_GENERATIVE_AI_API_KEY = apiKey;
     }
 
-    const result = streamText({
-      model: google("gemini-2.0-flash-exp"),
-      system: `You are an AI agent specialized in redefining and improving intersections for better safety and urban design. 
+    // Build system prompt with context if available
+    let systemPrompt = `You are an AI agent specialized in redefining and improving intersections for better safety and urban design. 
 You help users reimagine intersections by generating new images based on their requests. 
 When a user asks you to modify or improve an intersection, use the generateImage tool to create a new visualization.
 
@@ -51,7 +59,16 @@ Guidelines for image generation:
 - If a generation doesn't work as expected, try again with a different approach or more specific details.
 - Always explain what improvements you're making and why they enhance safety.
 
-Be conversational, helpful, and explain what improvements you're making when generating images.`,
+Be conversational, helpful, and explain what improvements you're making when generating images.`;
+
+    // Add cluster context if available
+    if (context && context.trim()) {
+      systemPrompt += `\n\nCONTEXT ABOUT THIS INTERSECTION:\n${context}\n\nUse this context to provide informed, context-aware responses. If you see that the user has made recent improvements (like adding bike lanes or crosswalks), acknowledge those improvements positively and suggest additional enhancements based on the safety audit findings.`;
+    }
+
+    const result = streamText({
+      model: google("gemini-2.0-flash-exp"),
+      system: systemPrompt,
       messages: await convertToModelMessages(messages),
       tools: {
         generateImage: {

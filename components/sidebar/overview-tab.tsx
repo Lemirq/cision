@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { StreetViewPanel } from "./street-view-panel";
 import { StatsGrid } from "./stats-grid";
 import { SeverityProgressBar } from "./severity-progress-bar";
@@ -11,7 +10,6 @@ import type {
 } from "@/types/collision";
 import {
   MapPin,
-  ChevronRight,
   Calendar,
   Clock,
   AlertTriangle,
@@ -33,7 +31,6 @@ export function OverviewTab({
   hotspot,
   collision,
   placeInfo,
-  onImageReplaced,
   replacedImageUrl,
 }: OverviewTabProps) {
   const displayAddress = placeInfo?.formattedAddress || hotspot.address;
@@ -41,7 +38,6 @@ export function OverviewTab({
     placeInfo?.neighborhood ||
     collision?.neighbourhood ||
     "Intersection location";
-
 
   return (
     <div className="space-y-4">
@@ -73,19 +69,6 @@ export function OverviewTab({
       {/* Show cluster information if it's a cluster (multiple collisions) */}
       {!collision && hotspot.total_count > 1 && (
         <div className="space-y-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <AlertTriangle className="h-4 w-4 text-amber-400" />
-            <div>
-              <p className="text-sm font-medium text-amber-400">
-                Problem Area - {hotspot.total_count} collisions
-              </p>
-              <p className="text-xs text-zinc-500 mt-1">
-                Multiple accidents at this location indicate infrastructure
-                issues
-              </p>
-            </div>
-          </div>
-
           {/* Date range for cluster */}
           {hotspot.collisions && hotspot.collisions.length > 0 && (
             <div className="grid grid-cols-2 gap-3">
@@ -130,7 +113,7 @@ export function OverviewTab({
             hotspot.pedestrian_count > 0) && (
             <div>
               <p className="text-xs text-zinc-500 mb-2">Severity Breakdown</p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 w-full">
                 {hotspot.fatal_count > 0 && (
                   <div className="flex items-center gap-1 px-2 py-1 rounded bg-red-900/30 border border-red-700/50">
                     <AlertTriangle className="h-3 w-3 text-red-400" />
@@ -277,13 +260,6 @@ export function OverviewTab({
       <StatsGrid hotspot={hotspot} />
 
       <SeverityProgressBar score={hotspot.severity_score} />
-
-      <div className="pt-2">
-        <button className="w-full flex items-center justify-between p-3 rounded-lg bg-blue-600 hover:bg-blue-700 transition-colors">
-          <span className="text-white font-medium">Generate Safety Audit</span>
-          <ChevronRight className="h-4 w-4 text-white/80" />
-        </button>
-      </div>
     </div>
   );
 }

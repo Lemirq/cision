@@ -18,6 +18,7 @@ import {
 import { useConversation } from "@elevenlabs/react";
 import { cn } from "@/lib/utils";
 import { useMapStore } from "@/stores/map-store";
+import { getClusterData, getClusterContext } from "@/lib/cluster-storage";
 
 // Agent IDs
 const AGENTS = {
@@ -211,19 +212,66 @@ export function PersonaSidebar() {
       stopRinging();
       setConnectionStatus("connecting");
 
+      // Load cluster context for context-aware responses
+      let dynamicVariables: Record<string, string> | undefined = undefined;
+      if (selectedHotspot) {
+        const clusterData = getClusterData(selectedHotspot.id);
+        const context = getClusterContext(selectedHotspot.id);
+
+        dynamicVariables = {
+          intersection_name:
+            selectedHotspot.intersection || selectedHotspot.address,
+          collision_count: selectedHotspot.total_count.toString(),
+          fatal_count: selectedHotspot.fatal_count.toString(),
+          cyclist_count: selectedHotspot.cyclist_count.toString(),
+          pedestrian_count: selectedHotspot.pedestrian_count.toString(),
+        };
+
+        // Add safety audit information if available
+        if (clusterData?.safetyAudit) {
+          const audit = clusterData.safetyAudit;
+          const safetyScore = Math.floor(
+            (audit.metrics.signage +
+              audit.metrics.lighting +
+              audit.metrics.crosswalkVisibility +
+              audit.metrics.bikeInfrastructure +
+              audit.metrics.pedestrianInfrastructure +
+              audit.metrics.trafficCalming) /
+              6
+          );
+
+          dynamicVariables.safety_score = safetyScore.toString();
+          
+          // Add infrastructure gaps as comma-separated list
+          if (audit.infrastructureGaps.length > 0) {
+            dynamicVariables.missing_infrastructure = audit.infrastructureGaps.join(", ");
+          }
+
+        // Add recent improvements if any
+        if (clusterData.images.history.length > 0) {
+          const recentImprovementsList = clusterData.images.history
+            .slice(-3)
+            .map((v) => v.prompt || v.description || "Image improvement")
+            .join("; ");
+          dynamicVariables.recent_improvements = recentImprovementsList;
+        }
+        }
+
+        // Include full context (truncated if too long for dynamic variables)
+        // Note: ElevenLabs may have limits on dynamic variable values
+        if (context) {
+          // Truncate context to reasonable length for dynamic variables
+          const truncatedContext = context.length > 500 
+            ? context.substring(0, 500) + "..."
+            : context;
+          dynamicVariables.cluster_context = truncatedContext;
+        }
+      }
+
       await conversation.startSession({
         agentId: AGENTS[selectedPersona.id],
         connectionType: "websocket",
-        dynamicVariables: selectedHotspot
-          ? {
-              intersection_name:
-                selectedHotspot.intersection || selectedHotspot.address,
-              collision_count: selectedHotspot.total_count.toString(),
-              fatal_count: selectedHotspot.fatal_count.toString(),
-              cyclist_count: selectedHotspot.cyclist_count.toString(),
-              pedestrian_count: selectedHotspot.pedestrian_count.toString(),
-            }
-          : undefined,
+        dynamicVariables,
       });
     } catch (error) {
       console.error("Failed to start conversation:", error);

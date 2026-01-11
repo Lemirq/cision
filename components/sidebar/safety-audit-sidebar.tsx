@@ -10,6 +10,11 @@ import { SuggestionCard } from "./suggestion-card";
 import type { SafetyAuditResult } from "@/types/safety-audit";
 import { Signpost, Lightbulb, Navigation, Bike, User, Gauge } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  getClusterData,
+  updateSafetyAudit,
+  initializeClusterData,
+} from "@/lib/cluster-storage";
 
 function ScoreBadge({ score, label }: { score: number; label: string }) {
   const getColorClasses = () => {
@@ -106,7 +111,7 @@ export function SafetyAuditSidebar() {
   } = useMapStore();
   const [error, setError] = useState<string | null>(null);
 
-  // Auto-generate audit when cluster is selected
+  // Load existing audit from state store and auto-generate if needed
   useEffect(() => {
     if (!selectedHotspot) {
       setSafetyAudit(null);
@@ -114,8 +119,18 @@ export function SafetyAuditSidebar() {
       return;
     }
 
-    // Skip if already generated or generating
-    if (safetyAudit || isGeneratingAudit) {
+    // Initialize cluster data in store
+    initializeClusterData(selectedHotspot.id, selectedHotspot);
+
+    // Try to load existing audit from state store
+    const storedData = getClusterData(selectedHotspot.id);
+    if (storedData?.safetyAudit) {
+      setSafetyAudit(storedData.safetyAudit);
+      return; // Don't generate if we have stored data
+    }
+
+    // Skip if already generating or if audit already exists
+    if (isGeneratingAudit || safetyAudit) {
       return;
     }
 
@@ -150,6 +165,9 @@ export function SafetyAuditSidebar() {
 
         const auditData: SafetyAuditResult = await response.json();
         setSafetyAudit(auditData);
+
+        // Save audit to local storage
+        updateSafetyAudit(selectedHotspot.id, auditData, selectedHotspot);
       } catch (err) {
         console.error("Error generating safety audit:", err);
         setError(err instanceof Error ? err.message : "Unknown error");
@@ -161,8 +179,8 @@ export function SafetyAuditSidebar() {
     generateAudit();
   }, [
     selectedHotspot,
-    safetyAudit,
     isGeneratingAudit,
+    safetyAudit,
     setSafetyAudit,
     setIsGeneratingAudit,
   ]);

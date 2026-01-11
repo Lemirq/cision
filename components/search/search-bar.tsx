@@ -40,7 +40,9 @@ export function SearchBar({ hotspots }: SearchBarProps) {
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
-  const [placeSuggestions, setPlaceSuggestions] = useState<PlacePrediction[]>([]);
+  const [placeSuggestions, setPlaceSuggestions] = useState<PlacePrediction[]>(
+    [],
+  );
   const [isLoadingPlaces, setIsLoadingPlaces] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -92,7 +94,9 @@ export function SearchBar({ hotspots }: SearchBarProps) {
 
     setIsLoadingPlaces(true);
     try {
-      const response = await fetch(`/api/places/autocomplete?input=${encodeURIComponent(input)}`);
+      const response = await fetch(
+        `/api/places/autocomplete?input=${encodeURIComponent(input)}`,
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch suggestions");
       }
@@ -149,20 +153,19 @@ export function SearchBar({ hotspots }: SearchBarProps) {
   const handleSelect = async (result: SearchResult) => {
     if (result.type === "intersection") {
       selectHotspot(result.intersection);
-      flyTo(
-        result.intersection.centroid.lng,
-        result.intersection.centroid.lat
-      );
+      flyTo(result.intersection.centroid.lng, result.intersection.centroid.lat);
     } else if (result.type === "place") {
       // Fetch place details and fly to location
       try {
         setIsLoadingPlaces(true);
-        const response = await fetch(`/api/places/details?place_id=${encodeURIComponent(result.placeId)}`);
+        const response = await fetch(
+          `/api/places/details?place_id=${encodeURIComponent(result.placeId)}`,
+        );
         if (!response.ok) {
           throw new Error("Failed to fetch place details");
         }
         const data = await response.json();
-        
+
         // Fly to the location
         flyTo(data.location.lng, data.location.lat);
         // Clear selection since we don't have a hotspot for this place
@@ -173,7 +176,7 @@ export function SearchBar({ hotspots }: SearchBarProps) {
         setIsLoadingPlaces(false);
       }
     }
-    
+
     setQuery("");
     setIsOpen(false);
   };
@@ -182,13 +185,15 @@ export function SearchBar({ hotspots }: SearchBarProps) {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setFocusedIndex((prev) =>
-        prev < results.length - 1 ? prev + 1 : prev
-      );
+      setFocusedIndex((prev) => (prev < results.length - 1 ? prev + 1 : prev));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setFocusedIndex((prev) => (prev > 0 ? prev - 1 : -1));
-    } else if (e.key === "Enter" && focusedIndex >= 0 && results[focusedIndex]) {
+    } else if (
+      e.key === "Enter" &&
+      focusedIndex >= 0 &&
+      results[focusedIndex]
+    ) {
       e.preventDefault();
       handleSelect(results[focusedIndex]);
     } else if (e.key === "Escape") {
@@ -221,7 +226,7 @@ export function SearchBar({ hotspots }: SearchBarProps) {
 
   return (
     <div ref={searchRef} className="relative w-full max-w-md">
-      <div className="relative">
+      <div className="relative w-full">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-300 pointer-events-none" />
         <input
           ref={inputRef}
@@ -354,11 +359,13 @@ export function SearchBar({ hotspots }: SearchBarProps) {
                     })}
                   </>
                 )}
-                {results.length === 0 && !isLoadingPlaces && query.trim().length >= 2 && (
-                  <div className="px-4 py-6 text-center text-zinc-400 text-sm">
-                    No results found
-                  </div>
-                )}
+                {results.length === 0 &&
+                  !isLoadingPlaces &&
+                  query.trim().length >= 2 && (
+                    <div className="px-4 py-6 text-center text-zinc-400 text-sm">
+                      No results found
+                    </div>
+                  )}
               </>
             )}
           </motion.div>
