@@ -13,6 +13,7 @@ import React, {
 interface MenuItemProps {
   icon: React.ReactNode;
   onClick?: () => void;
+  style?: React.CSSProperties;
 }
 
 export function MenuItem({ icon, onClick }: MenuItemProps) {
@@ -48,7 +49,11 @@ export function useMenuContext(): MenuContextValue {
 
 export function MenuContainer({ children }: MenuContainerProps) {
   const [expanded, setExpanded] = useState(false);
-  const items = useMemo(() => Children.toArray(children), [children]);
+  const items = useMemo<React.ReactElement[]>(
+    () =>
+      (Children.toArray(children).filter(isValidElement) as React.ReactElement[]),
+    [children],
+  );
 
   if (items.length === 0) {
     return null;
@@ -65,29 +70,31 @@ export function MenuContainer({ children }: MenuContainerProps) {
     <MenuContext.Provider value={{ expanded, toggle }}>
       <div data-expanded={expanded} className="relative h-12 w-12">
         {/* Toggle (first item) */}
-        {isValidElement(items[0]) &&
-          cloneElement(items[0] as React.ReactElement, {
+        {items[0] &&
+          cloneElement(items[0] as React.ReactElement<Pick<MenuItemProps, "onClick">>, {
             onClick: toggle,
           })}
 
         {/* The rest of items positioned on an arc opening to the right */}
         {items.slice(1).map((child, idx) => {
-          if (!isValidElement(child)) return null;
           const t = nonToggleCount === 1 ? 0.5 : idx / (nonToggleCount - 1);
           const angleDeg = startAngleDeg + t * (endAngleDeg - startAngleDeg);
           const angle = (angleDeg * Math.PI) / 180;
           const x = Math.cos(angle) * radius;
           const y = Math.sin(angle) * radius;
 
-          return cloneElement(child as React.ReactElement, {
-            key: idx,
-            style: {
-              transform: expanded
-                ? `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`
-                : `translate(-50%, -50%)`,
-              transition: "transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1)",
-            } as React.CSSProperties,
-          });
+          return (
+            <React.Fragment key={idx}>
+              {cloneElement(child as React.ReactElement<Pick<MenuItemProps, "style">>, {
+                style: {
+                  transform: expanded
+                    ? `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`
+                    : `translate(-50%, -50%)`,
+                  transition: "transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1)",
+                } as React.CSSProperties,
+              })}
+            </React.Fragment>
+          );
         })}
       </div>
     </MenuContext.Provider>

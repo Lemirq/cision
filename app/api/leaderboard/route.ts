@@ -26,7 +26,7 @@ interface LeaderboardRow {
   pedestrian_count: number;
 }
 
-let cached: {
+const cached: {
   loaded: boolean;
   byMetric: Record<Metric, LeaderboardRow[]>;
 } = {
