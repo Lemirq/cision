@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useMapStore } from "@/stores/map-store";
-import { X, Loader2, AlertCircle, RefreshCw } from "lucide-react";
+import { X, Loader2, AlertCircle, RefreshCw, ChevronLeft } from "lucide-react";
 import { MetricProgressBar } from "./metric-progress-bar";
 import { FlawCard } from "./flaw-card";
 import { SuggestionCard } from "./suggestion-card";
@@ -95,7 +95,12 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-export function SafetyAuditSidebar() {
+interface SafetyAuditSidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export function SafetyAuditSidebar({ isOpen = false, onClose }: SafetyAuditSidebarProps) {
   const {
     selectedHotspot,
     safetyAudit,
@@ -167,7 +172,6 @@ export function SafetyAuditSidebar() {
     setIsGeneratingAudit,
   ]);
 
-  const isOpen = selectedHotspot !== null;
   const showContent = safetyAudit && !isGeneratingAudit && !error;
 
   const handleRetry = () => {
@@ -259,16 +263,29 @@ export function SafetyAuditSidebar() {
                 {selectedHotspot?.intersection || selectedHotspot?.address}
               </p>
             </div>
-            <button
-              onClick={() => {
-                selectHotspot(null);
-                setSafetyAudit(null);
-                setError(null);
-              }}
-              className="rounded-lg p-2 hover:bg-zinc-800 transition-colors"
-            >
-              <X className="h-5 w-5 text-zinc-400" />
-            </button>
+            <div className="flex items-center gap-2">
+              {onClose && (
+                <button
+                  onClick={onClose}
+                  className="rounded-lg p-2 hover:bg-zinc-800 transition-colors flex items-center"
+                  title="Close"
+                >
+                  <ChevronLeft className="h-5 w-5 text-zinc-400" />
+                  <ChevronLeft className="h-5 w-5 text-zinc-400 -ml-2" />
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  selectHotspot(null);
+                  setSafetyAudit(null);
+                  setError(null);
+                  if (onClose) onClose();
+                }}
+                className="rounded-lg p-2 hover:bg-zinc-800 transition-colors"
+              >
+                <X className="h-5 w-5 text-zinc-400" />
+              </button>
+            </div>
           </div>
 
           {/* Content */}
