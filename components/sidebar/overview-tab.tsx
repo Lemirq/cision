@@ -26,14 +26,22 @@ interface OverviewTabProps {
   collision?: CollisionPoint | null;
   placeInfo?: PlaceInfo | null;
   onImageReplaced?: (imageUrl: string | null) => void; // Callback when image is replaced
-  replacedImageUrl?: string | null; // Current replaced image URL
+  currentImageUrl?: string | null; // Current displayed image URL
+  carouselImages?: Array<{ id: string; imgUrl: string; isOriginal: boolean }>;
+  selectedImageId?: string;
+  onRevertImage?: (imageId: string) => void;
+  onSelectImage?: (imageId: string) => void;
 }
 
 export function OverviewTab({
   hotspot,
   collision,
   placeInfo,
-  replacedImageUrl,
+  currentImageUrl,
+  carouselImages: _carouselImages = [],
+  selectedImageId: _selectedImageId,
+  onRevertImage: _onRevertImage,
+  onSelectImage: _onSelectImage,
 }: OverviewTabProps) {
   const allHotspots = useMapStore((state) => state.allHotspots);
   const displayAddress = placeInfo?.formattedAddress || hotspot.address;
@@ -41,7 +49,7 @@ export function OverviewTab({
     placeInfo?.neighborhood ||
     collision?.neighbourhood ||
     "Intersection location";
-  
+
   // Normalize severity score relative to all hotspots
   const normalizedSeverityScore = normalizeSeverityScore(
     hotspot.severity_score,
@@ -72,7 +80,7 @@ export function OverviewTab({
         hour={collision?.hour}
         year={collision?.year}
         month={collision?.month}
-        replacedImageUrl={replacedImageUrl}
+        replacedImageUrl={currentImageUrl}
       />
 
       {/* Show cluster information if it's a cluster (multiple collisions) */}

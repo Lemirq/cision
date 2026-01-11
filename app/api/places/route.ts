@@ -55,9 +55,14 @@ export async function GET(request: NextRequest) {
     const address = result.formatted_address;
     
     // Extract address components
-    const addressComponents = result.address_components || [];
+    interface AddressComponent {
+      long_name: string;
+      short_name: string;
+      types: string[];
+    }
+    const addressComponents: AddressComponent[] = result.address_components || [];
     const getComponent = (types: string[]) => {
-      const component = addressComponents.find((comp: any) =>
+      const component = addressComponents.find((comp: AddressComponent) =>
         types.some((type) => comp.types.includes(type))
       );
       return component?.long_name || "";

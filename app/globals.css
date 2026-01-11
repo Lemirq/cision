@@ -236,6 +236,11 @@
   /* Ensure smooth transitions for the image */
   body.photo-view-open .PhotoView__PhotoViewImage {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    object-fit: contain !important;
+    max-width: calc(100vw - 400px) !important;
+    max-height: calc(100vh - 200px) !important;
+    width: auto !important;
+    height: auto !important;
   }
 
   /* Make sure the overlay (backdrop) still covers the full screen and is clickable */

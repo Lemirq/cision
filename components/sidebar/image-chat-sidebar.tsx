@@ -8,13 +8,11 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, lastAssistantMessageIsCompleteWithToolCalls } from "ai";
 import {
   getClusterData,
-  getClusterContext,
   getFullSafetyAuditContext,
-  addImageVersion,
   getInfrastructureGaps,
   saveClusterData,
+  addImageVersion,
 } from "@/lib/cluster-storage";
-import { useMapStore } from "@/stores/map-store";
 
 interface ImageChatSidebarProps {
   imageSrc?: string;
@@ -30,23 +28,19 @@ export function ImageChatSidebar({
   onClose,
 }: ImageChatSidebarProps) {
   const [input, setInput] = useState("");
-  const [clusterContext, setClusterContext] = useState<string>("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const previousImageRef = useRef<string | undefined>(imageSrc);
 
   // Get infrastructure gaps from store - use polling to avoid subscription issues
-  const [infrastructureGaps, setInfrastructureGaps] = useState<string[]>([]);
+  const [infrastructureGaps, setInfrastructureGaps] = useState<string[]>(() => 
+    clusterId ? getInfrastructureGaps(clusterId) : []
+  );
   
   useEffect(() => {
     if (!clusterId) {
-      setInfrastructureGaps([]);
       return;
     }
-    
-    // Get initial value
-    const gaps = getInfrastructureGaps(clusterId);
-    setInfrastructureGaps(gaps);
     
     // Poll for changes every 500ms
     const interval = setInterval(() => {
@@ -64,24 +58,25 @@ export function ImageChatSidebar({
   }, [clusterId]);
 
   // Load comprehensive cluster context - refresh when clusterId or cluster data changes
+  const [clusterContext, setClusterContext] = useState<string>(() => 
+    clusterId ? getFullSafetyAuditContext(clusterId) : ""
+  );
+  
   useEffect(() => {
-    if (clusterId) {
-      const loadContext = () => {
-        // Use the comprehensive safety audit context function
-        const context = getFullSafetyAuditContext(clusterId);
-        setClusterContext(context);
-      };
-
-      // Load immediately
-      loadContext();
-
-      // Refresh context periodically in case cluster data is updated
-      const intervalId = setInterval(loadContext, 2000); // Check every 2 seconds
-
-      return () => clearInterval(intervalId);
-    } else {
-      setClusterContext("");
+    if (!clusterId) {
+      return;
     }
+    
+    const loadContext = () => {
+      // Use the comprehensive safety audit context function
+      const context = getFullSafetyAuditContext(clusterId);
+      setClusterContext(context);
+    };
+
+    // Refresh context periodically in case cluster data is updated
+    const intervalId = setInterval(loadContext, 2000); // Check every 2 seconds
+
+    return () => clearInterval(intervalId);
   }, [clusterId]);
 
   // Convert imageSrc to absolute URL if needed
@@ -117,10 +112,15 @@ export function ImageChatSidebar({
 
   // Track processed tool calls to prevent infinite loops
   const processedToolCallsRef = useRef<Set<string>>(new Set());
+  const lastProcessedMessageIdRef = useRef<string | null>(null);
 
   // Watch for tool completion and trigger image replacement + save to storage
   useEffect(() => {
     const lastMessage = messages[messages.length - 1];
+    if (!lastMessage || lastMessage.id === lastProcessedMessageIdRef.current) {
+      return;
+    }
+
     if (lastMessage?.role === "assistant") {
       for (const part of lastMessage.parts || []) {
         if (part.type === "tool-generateImage" && part.state === "output-available") {
@@ -142,6 +142,7 @@ export function ImageChatSidebar({
           if (output.success && output.image && onImageReplaced) {
             // Mark as processed IMMEDIATELY before any state updates to prevent loops
             processedToolCallsRef.current.add(toolCallId);
+            lastProcessedMessageIdRef.current = lastMessage.id;
             
             // Call onImageReplaced directly - it's now memoized
             onImageReplaced(output.image);
@@ -153,7 +154,8 @@ export function ImageChatSidebar({
                 .slice()
                 .reverse()
                 .find((msg) => msg.role === "user");
-              const prompt = userMessage?.text || "";
+              // Extract text from message parts
+              const prompt = userMessage?.parts?.find((p) => p.type === "text")?.text || "";
 
               // Get current image as parent
               const clusterData = getClusterData(clusterId);
@@ -197,6 +199,12 @@ export function ImageChatSidebar({
     }
     previousImageRef.current = imageSrc;
   }, [imageSrc, clusterId]);
+
+  // Reset processed tool calls when imageSrc changes
+  useEffect(() => {
+    processedToolCallsRef.current.clear();
+    lastProcessedMessageIdRef.current = null;
+  }, [imageSrc]);
 
   const handleSend = () => {
     if (!input.trim() || isLoading || !imageSrc) return;
@@ -260,7 +268,7 @@ export function ImageChatSidebar({
               <div className="rounded-lg px-3 py-2 text-sm bg-zinc-800 text-zinc-200">
                 <p className="whitespace-pre-wrap break-words">
                   Hello! I can help you redefine this intersection. Describe how
-                  you'd like to improve it, and I'll generate a new image showing
+                  you&apos;d like to improve it, and I&apos;ll generate a new image showing
                   your vision.
                 </p>
               </div>
@@ -424,7 +432,7 @@ export function ImageChatSidebar({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={imageSrc ? "Describe how to redefine this intersection..." : "No image available"}
+            placeholder={imageSrc ? "Write your changes..." : "No image available"}
             className="flex-1 resize-none rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent max-h-32"
             rows={1}
             style={{
