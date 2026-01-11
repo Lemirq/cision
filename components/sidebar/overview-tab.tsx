@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { StreetViewPanel } from "./street-view-panel";
 import { StatsGrid } from "./stats-grid";
 import { SeverityProgressBar } from "./severity-progress-bar";
@@ -24,18 +25,23 @@ interface OverviewTabProps {
   hotspot: ClusteredHotspot;
   collision?: CollisionPoint | null;
   placeInfo?: PlaceInfo | null;
+  onImageReplaced?: (imageUrl: string | null) => void; // Callback when image is replaced
+  replacedImageUrl?: string | null; // Current replaced image URL
 }
 
 export function OverviewTab({
   hotspot,
   collision,
   placeInfo,
+  onImageReplaced,
+  replacedImageUrl,
 }: OverviewTabProps) {
   const displayAddress = placeInfo?.formattedAddress || hotspot.address;
   const displayLocation =
     placeInfo?.neighborhood ||
     collision?.neighbourhood ||
     "Intersection location";
+
 
   return (
     <div className="space-y-4">
@@ -61,6 +67,7 @@ export function OverviewTab({
         hour={collision?.hour}
         year={collision?.year}
         month={collision?.month}
+        replacedImageUrl={replacedImageUrl}
       />
 
       {/* Show cluster information if it's a cluster (multiple collisions) */}

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { RotateCw, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PhotoView } from "react-photo-view";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface StreetViewPanelProps {
   lat: number;
@@ -12,12 +13,14 @@ interface StreetViewPanelProps {
   hour?: string; // Hour of the crash (0-23)
   year?: string;
   month?: string;
+  replacedImageUrl?: string | null; // Generated image to replace the street view
 }
 
-export function StreetViewPanel({ lat, lng, date, hour, year, month }: StreetViewPanelProps) {
+export function StreetViewPanel({ lat, lng, date, hour, year, month, replacedImageUrl }: StreetViewPanelProps) {
   const [heading, setHeading] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [showShine, setShowShine] = useState(false);
   const imageRef = useRef<HTMLImageElement>(null);
 
   // Construct date parameter for Google Street View API
@@ -60,8 +63,8 @@ export function StreetViewPanel({ lat, lng, date, hour, year, month }: StreetVie
   // Note: While Google Street View API doesn't directly control day/night,
   // using the date parameter requests historical imagery from that time period,
   // which may naturally reflect the time conditions when available
-  const thumbnailUrl = `/api/streetview?lat=${lat}&lng=${lng}&heading=${heading}&size=640x640${dateParam}`;
-  const previewUrl = `/api/streetview?lat=${lat}&lng=${lng}&heading=${heading}&size=640x640${dateParam}`;
+  const originalUrl = `/api/streetview?lat=${lat}&lng=${lng}&heading=${heading}&size=640x640${dateParam}`;
+  const displayUrl = replacedImageUrl || originalUrl;
 
   const rotateView = () => {
     setIsLoading(true);
@@ -74,6 +77,19 @@ export function StreetViewPanel({ lat, lng, date, hour, year, month }: StreetVie
     setIsLoading(true);
     setHasError(false);
   }, [date, hour, year, month, lat, lng]);
+
+  // Trigger shine animation when image is replaced
+  useEffect(() => {
+    if (replacedImageUrl) {
+      setIsLoading(true);
+      setShowShine(true);
+      // Reset shine after animation completes
+      const timer = setTimeout(() => {
+        setShowShine(false);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [replacedImageUrl]);
 
   const handleExpand = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -101,27 +117,58 @@ export function StreetViewPanel({ lat, lng, date, hour, year, month }: StreetVie
           </div>
         </div>
       ) : (
-        <PhotoView src={previewUrl}>
-          <img
-            ref={imageRef}
-            src={thumbnailUrl}
-            alt="Street View"
-            className="w-full h-64 object-cover cursor-pointer"
-            onLoad={() => setIsLoading(false)}
-            onError={handleImageError}
-          />
-        </PhotoView>
+        <div className="relative">
+          <PhotoView src={displayUrl}>
+            <motion.img
+              ref={imageRef}
+              src={displayUrl}
+              alt={replacedImageUrl ? "Redesigned Intersection" : "Street View"}
+              className="w-full h-64 object-cover cursor-pointer"
+              onLoad={() => setIsLoading(false)}
+              onError={handleImageError}
+              onClick={(e) => {
+                // Prevent click from closing PhotoView
+                e.stopPropagation();
+              }}
+              initial={replacedImageUrl ? { opacity: 0, scale: 1.05 } : false}
+              animate={replacedImageUrl ? { opacity: 1, scale: 1 } : {}}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+            />
+          </PhotoView>
+          
+          {/* Shine effect overlay */}
+          <AnimatePresence>
+            {showShine && replacedImageUrl && (
+              <motion.div
+                className="absolute inset-0 pointer-events-none z-20"
+                initial={{ x: "-100%" }}
+                animate={{ x: "200%" }}
+                exit={{ opacity: 0 }}
+                transition={{
+                  duration: 1.5,
+                  ease: "easeInOut",
+                }}
+                style={{
+                  background: "linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%)",
+                  transform: "skewX(-20deg)",
+                }}
+              />
+            )}
+          </AnimatePresence>
+        </div>
       )}
 
       <div className="absolute bottom-3 right-3 flex gap-2">
-        <Button
-          size="icon"
-          variant="secondary"
-          className="h-8 w-8"
-          onClick={rotateView}
-        >
-          <RotateCw className="h-4 w-4" />
-        </Button>
+        {!replacedImageUrl && (
+          <Button
+            size="icon"
+            variant="secondary"
+            className="h-8 w-8"
+            onClick={rotateView}
+          >
+            <RotateCw className="h-4 w-4" />
+          </Button>
+        )}
         {!hasError && (
           <Button
             size="icon"
