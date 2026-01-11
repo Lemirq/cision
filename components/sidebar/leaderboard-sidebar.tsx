@@ -54,6 +54,20 @@ export function LeaderboardSidebar({
     setPage(1);
   }, [metric, isOpen]);
 
+  // When using external hotspots array, compute total pages and clamp page
+  useEffect(() => {
+    if (!(useExternal && hotspots)) return;
+    const filtered = hotspots.filter((h) => {
+      const name = (h.intersection || h.address || "").trim().toLowerCase();
+      const nearZero =
+        Math.abs(h.centroid.lat) < 1e-9 && Math.abs(h.centroid.lng) < 1e-9;
+      return name !== "nsa" && !nearZero;
+    });
+    const total = Math.max(1, Math.ceil(filtered.length / pageSize));
+    setTotalPages(total);
+    setPage((p) => Math.min(p, total));
+  }, [useExternal, hotspots]);
+
   useEffect(() => {
     if (useExternal || !isOpen) return;
     let aborted = false;
@@ -98,8 +112,6 @@ export function LeaderboardSidebar({
         return name !== "nsa" && !nearZero;
       });
       const sortedAll = [...filtered].sort((a, b) => toValue(b) - toValue(a));
-      const total = Math.max(1, Math.ceil(sortedAll.length / pageSize));
-      if (totalPages !== total) setTotalPages(total);
       const start = (page - 1) * pageSize;
       return sortedAll.slice(start, start + pageSize);
     }
@@ -117,7 +129,7 @@ export function LeaderboardSidebar({
         address: r.address,
         intersection: r.name,
       })) as unknown as ClusteredHotspot[];
-  }, [hotspots, fetched, metric, useExternal, page, totalPages]);
+  }, [hotspots, fetched, metric, useExternal, page]);
 
   const getValue = (h: ClusteredHotspot) => {
     switch (metric) {
