@@ -25,8 +25,72 @@ function PhotoViewOverlay({
 }) {
   useEffect(() => {
     document.body.classList.add("photo-view-open");
+    
+    // Force toolbar and overlay to stay visible
+    const forceVisibility = () => {
+      const toolbars = document.querySelectorAll('[class*="PhotoView__PhotoViewToolbar"]');
+      toolbars.forEach((toolbar) => {
+        const el = toolbar as HTMLElement;
+        el.style.opacity = '1';
+        el.style.visibility = 'visible';
+        el.style.display = 'flex';
+      });
+    };
+
+    // Prevent PhotoView from hiding toolbar/overlay on image click
+    const handleImageClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('.PhotoView__PhotoViewImage')) {
+        e.stopPropagation();
+        forceVisibility();
+      }
+    };
+
+    // Prevent PhotoView from hiding elements on any click within the image area
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('.PhotoView__PhotoViewImage') || 
+          target.closest('.PhotoView__PhotoViewContent')) {
+        forceVisibility();
+      }
+    };
+
+    // Use mutation observer to keep toolbar visible
+    const observer = new MutationObserver(() => {
+      forceVisibility();
+    });
+
+    // Observe changes to PhotoView elements
+    const observePhotoView = () => {
+      const photoView = document.querySelector('[class*="PhotoView__PhotoView"]');
+      if (photoView) {
+        observer.observe(photoView, {
+          attributes: true,
+          attributeFilter: ['style', 'class'],
+          subtree: true,
+        });
+      }
+    };
+
+    // Initial force
+    forceVisibility();
+    
+    // Observe after a short delay to ensure PhotoView is rendered
+    const timeoutId = setTimeout(observePhotoView, 100);
+
+    document.addEventListener('click', handleClick, true);
+    document.addEventListener('click', handleImageClick, true);
+
+    // Keep forcing visibility periodically
+    const intervalId = setInterval(forceVisibility, 100);
+
     return () => {
       document.body.classList.remove("photo-view-open");
+      document.removeEventListener('click', handleClick, true);
+      document.removeEventListener('click', handleImageClick, true);
+      observer.disconnect();
+      clearTimeout(timeoutId);
+      clearInterval(intervalId);
     };
   }, []);
 
@@ -187,6 +251,7 @@ export function IntersectionSidebar() {
               <PhotoProvider
                 photoWrapClassName="photo-view-with-sidebar"
                 photoClosable={false}
+                maskOpacity={0.8}
                 overlayRender={({ images, index, onClose: photoViewClose }) => {
                   const currentImage = images[index];
                   return (

@@ -4,13 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-interface Message {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  timestamp: Date;
-}
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport, lastAssistantMessageIsCompleteWithToolCalls } from "ai";
 
 interface ImageChatSidebarProps {
   imageSrc?: string;
@@ -19,18 +14,30 @@ interface ImageChatSidebarProps {
 }
 
 export function ImageChatSidebar({ imageSrc, onImageReplaced, onClose }: ImageChatSidebarProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      role: "assistant",
-      content: "Hello! I can help you redefine this intersection. Describe how you'd like to improve it, and I'll generate a new image showing your vision.",
-      timestamp: new Date(),
-    },
-  ]);
   const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Convert imageSrc to absolute URL if needed
+  const getAbsoluteImageUrl = (src?: string): string | undefined => {
+    if (!src) return undefined;
+    if (src.startsWith("data:")) return src; // Data URL - use as is
+    if (src.startsWith("http")) return src; // Absolute URL - use as is
+    // Relative URL - convert to absolute
+    return `${typeof window !== "undefined" ? window.location.origin : ""}${src}`;
+  };
+
+  const { messages, sendMessage, status } = useChat({
+    transport: new DefaultChatTransport({
+      api: "/api/chat",
+      body: () => ({
+        imageUrl: getAbsoluteImageUrl(imageSrc),
+      }),
+    }),
+    sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
+  });
+
+  const isLoading = status === "streaming" || status === "submitted";
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -40,77 +47,26 @@ export function ImageChatSidebar({ imageSrc, onImageReplaced, onClose }: ImageCh
     scrollToBottom();
   }, [messages]);
 
-  const handleSend = async () => {
+  // Watch for tool completion and trigger image replacement
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?.role === "assistant") {
+      for (const part of lastMessage.parts || []) {
+        if (part.type === "tool-generateImage" && part.state === "output-available") {
+          const output = part.output as { success: boolean; image?: string; error?: string };
+          if (output.success && output.image && onImageReplaced) {
+            onImageReplaced(output.image);
+          }
+        }
+      }
+    }
+  }, [messages, onImageReplaced]);
+
+  const handleSend = () => {
     if (!input.trim() || isLoading || !imageSrc) return;
-
-    const userMessage: Message = {
-      id: `user-${Date.now()}`,
-      role: "user",
-      content: input.trim(),
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
     const currentInput = input.trim();
     setInput("");
-    setIsLoading(true);
-
-    try {
-      // Handle data URLs, absolute URLs, and relative URLs
-      let imageUrl: string;
-      if (imageSrc.startsWith("data:")) {
-        // Data URL (base64) - use as is
-        imageUrl = imageSrc;
-      } else if (imageSrc.startsWith("http")) {
-        // Absolute URL - use as is
-        imageUrl = imageSrc;
-      } else {
-        // Relative URL - convert to absolute
-        imageUrl = `${window.location.origin}${imageSrc}`;
-      }
-
-      const response = await fetch("/api/image-generation", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          prompt: currentInput,
-          imageUrl: imageUrl,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to generate image");
-      }
-
-      const data = await response.json();
-
-      // Replace the image on screen instead of showing in chat
-      if (data.image && onImageReplaced) {
-        onImageReplaced(data.image);
-      }
-
-      const assistantMessage: Message = {
-        id: `assistant-${Date.now()}`,
-        role: "assistant",
-        content: data.text || "I've generated a new image and replaced the street view. You can use the undo button to restore the original.",
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
-    } catch (error) {
-      const errorMessage: Message = {
-        id: `assistant-${Date.now()}`,
-        role: "assistant",
-        content: `Sorry, I encountered an error: ${error instanceof Error ? error.message : "Unknown error"}`,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
+    sendMessage({ text: currentInput });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -153,6 +109,23 @@ export function ImageChatSidebar({ imageSrc, onImageReplaced, onClose }: ImageCh
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+        {messages.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex gap-3 flex-row"
+          >
+            <div className="flex-1 max-w-[80%] items-start">
+              <div className="rounded-lg px-3 py-2 text-sm bg-zinc-800 text-zinc-200">
+                <p className="whitespace-pre-wrap break-words">
+                  Hello! I can help you redefine this intersection. Describe how
+                  you'd like to improve it, and I'll generate a new image showing
+                  your vision.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
         <AnimatePresence initial={false}>
           {messages.map((message) => (
             <motion.div
@@ -179,12 +152,71 @@ export function ImageChatSidebar({ imageSrc, onImageReplaced, onClose }: ImageCh
                       : "bg-zinc-800 text-zinc-200"
                   )}
                 >
-                  <p className="whitespace-pre-wrap break-words">
-                    {message.content}
-                  </p>
+                  {message.parts?.length ? (
+                    message.parts.map((part, index) => {
+                    switch (part.type) {
+                      case "text":
+                        return (
+                          <p
+                            key={index}
+                            className="whitespace-pre-wrap break-words"
+                          >
+                            {part.text}
+                          </p>
+                        );
+                      case "tool-generateImage": {
+                        const callId = part.toolCallId;
+                        switch (part.state) {
+                          case "input-streaming":
+                            return (
+                              <div key={callId} className="text-zinc-400">
+                                Preparing to generate image...
+                              </div>
+                            );
+                          case "input-available": {
+                            const input = part.input as { prompt: string };
+                            return (
+                              <div key={callId} className="text-zinc-400">
+                                Generating image: {input.prompt}
+                              </div>
+                            );
+                          }
+                          case "output-available": {
+                            const output = part.output as {
+                              success: boolean;
+                              message?: string;
+                              error?: string;
+                            };
+                            return (
+                              <div key={callId} className="text-zinc-200">
+                                {output.success
+                                  ? output.message ||
+                                    "Image generated successfully! The new image has replaced the street view."
+                                  : `Error: ${output.error || "Failed to generate image"}`}
+                              </div>
+                            );
+                          }
+                          case "output-error":
+                            return (
+                              <div key={callId} className="text-red-400">
+                                Error: {part.errorText}
+                              </div>
+                            );
+                        }
+                        break;
+                      }
+                    }
+                    })
+                  ) : (
+                    <p className="whitespace-pre-wrap break-words">
+                      {message.role === "assistant"
+                        ? "Hello! I can help you redefine this intersection. Describe how you'd like to improve it, and I'll generate a new image showing your vision."
+                        : ""}
+                    </p>
+                  )}
                 </div>
                 <span className="text-xs text-zinc-500 mt-1 block">
-                  {message.timestamp.toLocaleTimeString([], {
+                  {new Date().toLocaleTimeString([], {
                     hour: "2-digit",
                     minute: "2-digit",
                   })}

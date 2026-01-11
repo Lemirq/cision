@@ -237,4 +237,39 @@
   body.photo-view-open .PhotoView__PhotoViewImage img {
     pointer-events: auto;
   }
+
+  /* Prevent PhotoView from hiding overlay elements on image click */
+  body.photo-view-open .PhotoView__PhotoViewImage {
+    pointer-events: auto !important;
+  }
+
+  body.photo-view-open .PhotoView__PhotoViewImage * {
+    pointer-events: auto !important;
+  }
+
+  /* Prevent the PhotoView toolbar/overlay from being hidden */
+  body.photo-view-open .PhotoView__PhotoViewToolbar {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: flex !important;
+  }
+
+  /* Keep the overlay visible at all times */
+  body.photo-view-open .PhotoView__PhotoViewOverlay {
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  /* Prevent PhotoView from hiding elements on mouse move or click */
+  body.photo-view-open .PhotoView__PhotoViewWrap:hover .PhotoView__PhotoViewToolbar {
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  /* Force toolbar to always be visible */
+  body.photo-view-open [class*="PhotoView__PhotoViewToolbar"] {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: flex !important;
+  }
 }
