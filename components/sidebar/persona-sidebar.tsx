@@ -252,6 +252,8 @@ export function PersonaSidebar() {
   const isConnecting = connectionStatus === "connecting";
   const isCallInProgress = isRinging || isConnecting || isConnected;
 
+  // Sidebar is always visible in this baseline state
+
   return (
     <motion.aside
       initial={{ x: 0 }}
