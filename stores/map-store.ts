@@ -14,6 +14,8 @@ interface MapState {
   selectedCollision: CollisionPoint | null;
   placeInfo: PlaceInfo | null;
   sidebarOpen: boolean;
+  personaOpen: boolean;
+  setPersonaOpen: (open: boolean) => void;
   setSidebarOpen: (open: boolean) => void;
   toggleSidebar: () => void;
   setViewport: (viewport: Partial<MapState["viewport"]>) => void;
@@ -35,6 +37,8 @@ export const useMapStore = create<MapState>((set) => ({
   selectedCollision: null,
   placeInfo: null,
   sidebarOpen: false,
+  personaOpen: true,
+  setPersonaOpen: (open) => set({ personaOpen: open }),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
   toggleSidebar: () =>
     set((state) => ({ sidebarOpen: !state.sidebarOpen })),
