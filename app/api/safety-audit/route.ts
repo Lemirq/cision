@@ -173,11 +173,11 @@ ANALYSIS FRAMEWORK:
 Provide a comprehensive safety audit with:
 - Overall walkability score (0-100) based on all factors
 - Individual metric scores for: signage, lighting, crosswalk visibility, bike infrastructure, pedestrian infrastructure, and traffic calming
-- 3-5 critical safety flaws with specific descriptions
-- Actionable improvement suggestions with priority, cost estimates, and expected impact
+- 3-5 critical safety flaws with specific descriptions (each description must be exactly 1 sentence)
+- Actionable improvement suggestions with priority, cost estimates, and expected impact (each description must be exactly 1 sentence)
 - List of missing infrastructure elements
 
-Be SPECIFIC. Reference ACTUAL visual elements in the image.`;
+Be SPECIFIC. Reference ACTUAL visual elements in the image. All descriptions for safety flaws and improvement suggestions must be exactly 1 sentence each.`;
 
     // Generate the safety audit using structured output
     const result = await generateText({
