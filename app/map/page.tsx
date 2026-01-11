@@ -6,6 +6,7 @@ import { LeftSidebar } from "@/components/sidebar/left-sidebar";
 import { PersonaSidebar } from "@/components/sidebar/persona-sidebar";
 import { IntersectionSidebar } from "@/components/sidebar/intersection-sidebar";
 import { SafetyAuditSidebar } from "@/components/sidebar/safety-audit-sidebar";
+import { LeaderboardSidebar } from "@/components/sidebar/leaderboard-sidebar";
 import { SearchBar } from "@/components/search/search-bar";
 import { DEMO_HOTSPOTS } from "@/data/demo-intersections";
 import { useMapStore } from "@/stores/map-store";
@@ -13,9 +14,14 @@ import { useMapStore } from "@/stores/map-store";
 export default function App() {
   const [isVoiceAgentsOpen, setIsVoiceAgentsOpen] = useState(false);
   const [isSafetyAuditOpen, setIsSafetyAuditOpen] = useState(false);
+<<<<<<< HEAD
   const [lastSelectedHotspotId, setLastSelectedHotspotId] = useState<
     string | null
   >(null);
+=======
+  const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
+  const [lastSelectedHotspotId, setLastSelectedHotspotId] = useState<string | null>(null);
+>>>>>>> ce46f9a (finished final leaderboard)
   const selectedHotspot = useMapStore((state) => state.selectedHotspot);
 
   // Automatically open Safety Audit sidebar when a new hotspot is selected
@@ -48,20 +54,35 @@ export default function App() {
     // Close voice agents if opening safety audit
     if (!isSafetyAuditOpen) {
       setIsVoiceAgentsOpen(false);
+      setIsLeaderboardOpen(false);
+    }
+  };
+
+  const handleLeaderboardClick = () => {
+    setIsLeaderboardOpen((prev) => !prev);
+    if (!isLeaderboardOpen) {
+      setIsVoiceAgentsOpen(false);
+      setIsSafetyAuditOpen(false);
     }
   };
 
   // Calculate padding based on which sidebars are open
   const leftPadding =
+<<<<<<< HEAD
     isVoiceAgentsOpen || isSafetyAuditOpen ? "pl-[20rem]" : "pl-16";
+=======
+    isVoiceAgentsOpen || isSafetyAuditOpen || isLeaderboardOpen ? "pl-[20rem]" : "pl-16";
+>>>>>>> ce46f9a (finished final leaderboard)
 
   return (
     <main className="relative h-screen w-screen overflow-hidden bg-zinc-950">
       <LeftSidebar
         onVoiceAgentsClick={handleVoiceAgentsClick}
         onSafetyAuditClick={handleSafetyAuditClick}
+        onLeaderboardClick={handleLeaderboardClick}
         isVoiceAgentsOpen={isVoiceAgentsOpen}
         isSafetyAuditOpen={isSafetyAuditOpen}
+        isLeaderboardOpen={isLeaderboardOpen}
       />
       <PersonaSidebar
         isOpen={isVoiceAgentsOpen}
@@ -70,6 +91,10 @@ export default function App() {
       <SafetyAuditSidebar
         isOpen={isSafetyAuditOpen}
         onClose={() => setIsSafetyAuditOpen(false)}
+      />
+      <LeaderboardSidebar
+        isOpen={isLeaderboardOpen}
+        onClose={() => setIsLeaderboardOpen(false)}
       />
       <div className={`${leftPadding} h-full relative`}>
         <div className="absolute w-full top-4 left-1/2 -translate-x-1/2 z-10">
