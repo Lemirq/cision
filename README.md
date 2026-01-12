@@ -79,7 +79,7 @@ Three AI stakeholders, powered by **ElevenLabs**, provide instant feedback:
 
 | Persona | Role | Perspective |
 |---------|------|-------------|
-| **Harsh Mehta** | DoorDash Courier & Collision Survivor | "How does this protect vulnerable road users?" |
+| **Amogh Merudi** | DoorDash Courier & Collision Survivor | "How does this protect vulnerable road users?" |
 | **Olivia Chow** | Mayor of Toronto | "Does this fit our Vision Zero budget and priorities?" |
 | **Marcus Chen** | Traffic Engineer, P.Eng. | "Do lane widths meet code? Is it buildable?" |
 

@@ -187,24 +187,29 @@ export function clusterCollisions(
     const pedestrianCount = cluster.filter((c) => c.pedestrian).length;
     
     // Calculate severity score based on cluster characteristics
-    // Base score increases with cluster size (repeated accidents = infrastructure problem)
-    let severityScore = Math.min(40 + totalCount * 2, 100);
+    // Using log scaling to prevent scores from hitting 100 too quickly
+    // and to better reflect the relative distribution of data points
+    let severityScore = 10 + Math.log1p(totalCount) * 8;
     
-    // Increase score for fatalities
+    // Increase score for fatalities (log scaled, capped at 25)
     if (fatalCount > 0) {
-      severityScore = Math.min(severityScore + fatalCount * 20, 100);
+      severityScore += Math.min(Math.log1p(fatalCount) * 12, 25);
     }
     
-    // Increase score for vulnerable road users
-    if (cyclistCount + pedestrianCount > 0) {
-      severityScore = Math.min(severityScore + (cyclistCount + pedestrianCount) * 5, 100);
+    // Increase score for vulnerable road users (cyclists, pedestrians)
+    const vulnerableCount = cyclistCount + pedestrianCount;
+    if (vulnerableCount > 0) {
+      severityScore += Math.min(Math.log1p(vulnerableCount) * 8, 20);
     }
     
-    // Increase score if cluster has many injury collisions
+    // Increase score for injury collisions
     const injuryCount = cluster.filter((c) => c.injuryCollisions).length;
     if (injuryCount > 0) {
-      severityScore = Math.min(severityScore + injuryCount * 3, 100);
+      severityScore += Math.min(Math.log1p(injuryCount) * 6, 15);
     }
+    
+    // Scale to approximately 0-100 range based on expected max
+    severityScore = Math.min(Math.round(severityScore), 100);
 
     // Use the most common neighborhood or first collision's neighborhood
     const neighborhoods = cluster.map((c) => c.neighbourhood).filter(Boolean);
