@@ -20,6 +20,20 @@ export const metadata: Metadata = {
   icons: {
     icon: "/Logo.svg",
   },
+  openGraph: {
+    images: [
+      {
+        url: "/cover.png",
+        width: 1200,
+        height: 628,
+        alt: "Cursor for City Planning splash",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/cover.png"],
+  },
 };
 
 export default function RootLayout({
