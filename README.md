@@ -22,9 +22,7 @@
 
 Every year, **1.35 million people die** in road traffic accidents globally. In Toronto alone, there are **50,000+ reported collisions annually**. The data exists: but it's trapped in spreadsheets, buried in bureaucracy, and disconnected from the planning decisions that could prevent deaths.
 
-**City planners face three critical gaps:**
-
-1. **Data Gap**: Collision data is abstract and scattered: no visual context
+1. **Data Gap**: Collision data is abstract and scattered with no visual context
 2. **Analysis Gap**: Safety audits take months and cost thousands of dollars
 3. **Communication Gap**: Planners can't easily show stakeholders why changes matter
 
@@ -55,48 +53,35 @@ Every year, **1.35 million people die** in road traffic accidents globally. In T
 ## 🚀 Features
 
 ### 1. Interactive Collision Heatmap
-- **3D MapGL-powered visualization** with clustered hotspots
-- Color-coded by severity (green → red based on collision count and fatality rate)
-- Fly-to animation on selection with 3D building extrusion
+- 3D MapGL visualization with clustered hotspots
+- Color-coded by severity (green → red)
 - Filter by collision type: fatalities, cyclist-involved, pedestrian-involved
 
-### 2. AI Safety Audit (Auto-Generated)
-Click any hotspot to instantly generate a comprehensive safety audit:
-- **6 Safety Metrics** (0-100 scale): Signage, Lighting, Crosswalk Visibility, Bike Infrastructure, Pedestrian Infrastructure, Traffic Calming
-- **4-Direction Street View Composite**: Automatically stitches North/East/South/West views
-- **Identified Safety Flaws** with severity levels (high/medium/low)
-- **Improvement Suggestions** with priority, estimated cost, and expected impact
-- **Missing Infrastructure Checklist**
+### 2. AI Safety Audit
+Instant safety audits with:
+- 6 safety metrics (0-100 scale): Signage, Lighting, Crosswalk Visibility, Bike Infrastructure, Pedestrian Infrastructure, Traffic Calming
+- 4-direction Street View composite
+- Identified safety flaws with severity levels
+- Improvement suggestions with priority, cost estimates, and expected impact
 
 ### 3. AI-Powered Intersection Redesign
-- **Natural language image generation**: Type "add protected bike lanes" and watch the intersection transform
-- **Version history carousel**: Compare original vs. generated designs
-- **Iteration workflow**: Refine designs incrementally
-- **Image persistence**: All versions saved for comparison
+- Natural language image generation for intersection transformations
+- Version history carousel to compare designs
+- Iterative refinement workflow
 
 ### 4. Multi-Persona Voice Agents
-Three AI stakeholders, powered by **ElevenLabs**, provide instant feedback:
-
-| Persona | Role | Perspective |
-|---------|------|-------------|
-| **Amogh Merudi** | DoorDash Courier & Collision Survivor | "How does this protect vulnerable road users?" |
-| **Olivia Chow** | Mayor of Toronto | "Does this fit our Vision Zero budget and priorities?" |
-| **Marcus Chen** | Traffic Engineer, P.Eng. | "Do lane widths meet code? Is it buildable?" |
-
-- Real-time voice conversations with live transcription
-- Dynamic context injection (safety audit data feeds into agent prompts)
+Three AI stakeholders (powered by ElevenLabs) provide instant feedback:
+- **Amogh Merudi**: DoorDash Courier & Collision Survivor
+- **Olivia Chow**: Mayor of Toronto
+- **Marcus Chen**: Traffic Engineer, P.Eng.
 
 ### 5. Smart Intersection Search
-- Search by intersection name ("Queen & Spadina")
-- Search by address with Google Places autocomplete
-- Keyboard navigation support
-- Recent search history
+- Search by intersection name or address with Google Places autocomplete
+- Keyboard navigation and recent search history
 
 ### 6. Collision Statistics Dashboard
-- **Date range analysis**: See collision trends over time
-- **Victim breakdown**: Fatalities, cyclists, pedestrians
-- **Normalized severity scoring**: Relative ranking vs. city-wide data
-- **Environmental context**: Time of day, day of week patterns
+- Date range analysis and victim breakdown
+- Normalized severity scoring vs. city-wide data
 
 ---
 
@@ -112,17 +97,17 @@ Three AI stakeholders, powered by **ElevenLabs**, provide instant feedback:
 ## 🛠 Tech Stack
 
 ### Frontend
-- **Next.js 15** (App Router, React 19)
-- **TypeScript** (strict mode)
+- **Next.js 16** (App Router, React 19)
+- **TypeScript**
 - **React Map GL / Mapbox** (3D mapping)
-- **Tailwind CSS** + **Framer Motion** (animations)
+- **Tailwind CSS** + **Framer Motion**
 - **Zustand** (state management)
-- **Vercel AI SDK** (chat + image generation)
+- **Vercel AI SDK**
 
 ### Backend & APIs
 - **Next.js API Routes** (serverless)
 - **MongoDB** (collision data storage)
-- **OpenAI GPT-4o** (safety audit generation)
+- **Google Gemini** (safety audit & image generation)
 - **ElevenLabs** (voice agents)
 - **Google Places API** (autocomplete + place details)
 
@@ -143,37 +128,17 @@ Three AI stakeholders, powered by **ElevenLabs**, provide instant feedback:
 ```
 cision/
 ├── app/
-│   ├── api/
-│   │   ├── chat/           # AI redesign chat endpoint
-│   │   ├── clusters/       # Collision cluster data
-│   │   ├── collisions/     # Individual collision records
-│   │   ├── image-generation/
-│   │   ├── places/         # Google Places integration
-│   │   ├── safety-audit/   # AI safety audit generation
-│   │   └── streetview/     # Street View image fetching
+│   ├── api/                # API routes (chat, clusters, safety-audit, etc.)
 │   ├── map/                # Main app page
 │   └── page.tsx            # Landing page
 ├── components/
-│   ├── map/                # CityMap, layers, heatmap
-│   ├── search/             # SearchBar with autocomplete
-│   ├── sidebar/
-│   │   ├── intersection-sidebar/   # Selected intersection details
-│   │   ├── persona-sidebar/        # Voice agent selection
-│   │   ├── safety-audit-sidebar/   # Audit results
-│   │   └── image-chat-sidebar/     # AI redesign chat
+│   ├── map/                # Map components
+│   ├── search/             # Search components
+│   ├── sidebar/            # Sidebar components (intersection, persona, audit, chat)
 │   └── ui/                 # Shared UI components
-├── lib/
-│   ├── cluster-storage.ts  # Cluster state management
-│   ├── clustering.ts       # Collision clustering logic
-│   ├── prompts/personas.ts # Voice agent prompts
-│   └── severity-normalization.ts
-├── stores/
-│   └── map-store.ts        # Global state (Zustand)
-├── types/
-│   ├── collision.ts
-│   ├── safety-audit.ts
-│   └── cluster-storage.ts
-└── public/                 # Static assets
+├── lib/                    # Utilities (clustering, prompts, etc.)
+├── stores/                 # State management (Zustand)
+└── types/                  # TypeScript type definitions
 ```
 
 ---
@@ -184,7 +149,7 @@ cision/
 - Node.js 18+
 - npm / yarn / bun
 - Mapbox API token
-- OpenAI API key
+- Google Gemini API key
 - ElevenLabs API key
 - Google Places API key (optional)
 
@@ -192,76 +157,35 @@ cision/
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/cision.git
+git clone <repository-url>
 cd cision
 
 # Install dependencies
 npm install
 
 # Set up environment variables
-cp .env.example .env.local
-
-# Add your API keys to .env.local
-# NEXT_PUBLIC_MAPBOX_TOKEN=pk.xxx
-# OPENAI_API_KEY=sk.xxx
-# ELEVENLABS_API_KEY=xi.xxx
+# Create .env.local with:
+NEXT_PUBLIC_MAPBOX_TOKEN=your_mapbox_token
+GOOGLE_GEMINI_API=your_gemini_key
+ELEVENLABS_API_KEY=your_elevenlabs_key
+NEXT_PUBLIC_GOOGLE_PLACES_API_KEY=your_google_places_key
 
 # Run development server
 npm run dev
 ```
-
-### Environment Variables
-
-```env
-NEXT_PUBLIC_MAPBOX_TOKEN=your_mapbox_token
-OPENAI_API_KEY=your_openai_key
-ELEVENLABS_API_KEY=your_elevenlabs_key
-NEXT_PUBLIC_GOOGLE_PLACES_API_KEY=your_google_places_key
-```
-
----
-
-## 🏆 Hackathon Innovations
-
-### What Makes Cision Hackathon-Worthy
-
-1. **End-to-End AI Integration**: Not just one AI feature, but a cohesive pipelinedata → visualization → audit → redesign → stakeholder validation
-
-2. **Real-Time Voice Agents**: ElevenLabs-powered conversations with dynamic context injection. Agents know the intersection's safety score, flaws, and suggestions in real-time.
-
-3. **Multi-Modal UX**: Combines maps, Street View, chat, voice, and image generation into a unified workflow
-
-4. **Production-Ready Code**: Built with Next.js 15, TypeScript strict mode, and proper architecture: ready to scale
-
-5. **Open Data Integration**: Leverages real Toronto collision data (open data portal) for authenticity and impact
-
-### Potential Extensions
-
-- **More cities**: Expand beyond Toronto to any city with open collision data
-- **Cost estimation**: Add real construction cost modeling
-- **Council integration**: Export designs to CAD/BIM formats for actual planning
-- **Community feedback**: Let residents submit intersection concerns via a mobile app
-- **Historical analysis**: Track before/after safety improvements
-
----
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
 ## 🙏 Acknowledgments
 
 - **Toronto Open Data Portal** for collision data
-- **Mapbox** for amazing mapping tools
-- **ElevenLabs** for realistic voice synthesis
-- **OpenAI** for GPT-4o and image generation
+- **Mapbox** for mapping tools
+- **ElevenLabs** for voice synthesis
+- **Google Gemini** for AI capabilities
 - **DeltaHacks 2026** for the opportunity to build this
 
 ---
 
 <p align="center">
-  <strong>Built with ❤️ for safer cities</strong><br />
-  Cision :  Cursor for City Planning
+  <strong>Built with ❤️ for safer cities</strong>
 </p>
