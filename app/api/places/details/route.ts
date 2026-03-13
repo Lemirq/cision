@@ -1,3 +1,4 @@
+// DEMO MODE: Hard-coded response, no external API calls
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -11,66 +12,48 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  // Map demo place IDs to specific coordinates, default to downtown Toronto
+  const placeData: Record<string, { name: string; address: string; lat: number; lng: number }> = {
+    demo_place_king_bay: {
+      name: "King St W & Bay St",
+      address: "King St W & Bay St, Toronto, ON, Canada",
+      lat: 43.6488,
+      lng: -79.3812,
+    },
+    demo_place_queen_spadina: {
+      name: "Queen St W & Spadina Ave",
+      address: "Queen St W & Spadina Ave, Toronto, ON, Canada",
+      lat: 43.6491,
+      lng: -79.3958,
+    },
+    demo_place_bloor_yonge: {
+      name: "Bloor St & Yonge St",
+      address: "Bloor St & Yonge St, Toronto, ON, Canada",
+      lat: 43.6709,
+      lng: -79.3858,
+    },
+    demo_place_dundas_university: {
+      name: "Dundas St W & University Ave",
+      address: "Dundas St W & University Ave, Toronto, ON, Canada",
+      lat: 43.6555,
+      lng: -79.3893,
+    },
+  };
 
-  if (!apiKey) {
-    return NextResponse.json(
-      { error: "Google Maps API key not configured" },
-      { status: 500 }
-    );
-  }
+  const place = placeData[placeId] || {
+    name: "Downtown Toronto",
+    address: "Toronto, ON, Canada",
+    lat: 43.6532,
+    lng: -79.3832,
+  };
 
-  try {
-    // Google Places Details API
-    const detailsUrl = new URL(
-      "https://maps.googleapis.com/maps/api/place/details/json"
-    );
-    detailsUrl.searchParams.set("place_id", placeId);
-    detailsUrl.searchParams.set("key", apiKey);
-    detailsUrl.searchParams.set("fields", "geometry,formatted_address,name,place_id");
-
-    const response = await fetch(detailsUrl.toString());
-
-    if (!response.ok) {
-      return NextResponse.json(
-        { error: "Failed to fetch place details" },
-        { status: response.status }
-      );
-    }
-
-    const data = await response.json();
-
-    if (data.status !== "OK") {
-      return NextResponse.json(
-        { error: `Places API error: ${data.status}` },
-        { status: 400 }
-      );
-    }
-
-    const result = data.result;
-    const location = result.geometry?.location;
-
-    if (!location) {
-      return NextResponse.json(
-        { error: "No location found for this place" },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      placeId: result.place_id,
-      name: result.name || result.formatted_address,
-      address: result.formatted_address,
-      location: {
-        lat: location.lat,
-        lng: location.lng,
-      },
-    });
-  } catch (error) {
-    console.error("Error fetching place details:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json({
+    placeId,
+    name: place.name,
+    address: place.address,
+    location: {
+      lat: place.lat,
+      lng: place.lng,
+    },
+  });
 }
